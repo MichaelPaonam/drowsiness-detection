@@ -85,3 +85,9 @@ The detailed implementation and milestone plan is documented in [plan.md](./plan
 - Define the exact label taxonomy
 - Build the preprocessing and train/validation/test split pipeline
 - Train a feature-based baseline model
+
+## References
+
+- [ECG-Based Driving Fatigue Detection Using Heart Rate Variability Analysis with Mutual Information](https://www.mdpi.com/2078-2489/14/10/539)
+- [Driving fatigue recognition model based on heart rate variability and respiratory rate](https://www.sciopen.com/article/10.16016/j.2097-0927.202203057)
+- [PhysDrive: A Multimodal Remote Physiological Measurement Dataset for In-vehicle Driver Monitoring](https://arxiv.org/html/2507.19172v1#S3)
