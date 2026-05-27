@@ -1,6 +1,71 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Packaging and build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Test and coverage outputs
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Type checker and linter caches
+.mypy_cache/
+.ruff_cache/
+.pyre/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment files
+.env
+.env.*
+
+# Data science and experiment outputs
+data/raw/
+data/processed/
+data/external/
+artifacts/
+models/
+checkpoints/
+runs/
+mlruns/
+wandb/
+
+# Temporary files
+tmp/
+temp/
+
+# Project-specific
 catboost_info/
 outputs/
-__pycache__/
 *.pyc
 .claude/
 DROZY/
