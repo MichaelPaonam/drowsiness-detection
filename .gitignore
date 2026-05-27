@@ -1,0 +1,7 @@
+catboost_info/
+outputs/
+__pycache__/
+*.pyc
+.claude/
+DROZY/
+doi_10_5061_dryad_5tb2rbp9c__v20230825/
