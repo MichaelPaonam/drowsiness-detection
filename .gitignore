@@ -62,3 +62,11 @@ wandb/
 # Temporary files
 tmp/
 temp/
+
+# Project-specific
+catboost_info/
+outputs/
+*.pyc
+.claude/
+DROZY/
+doi_10_5061_dryad_5tb2rbp9c__v20230825/
