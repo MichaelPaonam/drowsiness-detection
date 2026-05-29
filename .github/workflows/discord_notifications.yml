@@ -44,70 +44,79 @@ permissions:
 
 jobs:
   notify:
-    # Only notify for failed workflow runs
-    if: |
-      github.event_name != 'workflow_run' ||
-      github.event.workflow_run.conclusion == 'failure'
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'failure' }}
     runs-on: ubuntu-latest
 
     steps:
       - name: Build message
         id: message
+        env:
+          EVENT: ${{ github.event_name }}
+          ACTOR: ${{ github.actor }}
+          REPO: ${{ github.repository }}
+          COMPARE_URL: ${{ github.event.compare }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          REVIEW_URL: ${{ github.event.review.html_url }}
+          COMMENT_URL: ${{ github.event.comment.html_url }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+          MILESTONE_TITLE: ${{ github.event.milestone.title }}
+          MILESTONE_URL: ${{ github.event.milestone.html_url }}
+          WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
+          WORKFLOW_URL: ${{ github.event.workflow_run.html_url }}
+          WORKFLOW_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          ALERT_URL: ${{ github.event.alert.html_url }}
         run: |
-          EVENT="${{ github.event_name }}"
-          ACTOR="${{ github.actor }}"
-          REPO="${{ github.repository }}"
-
           case "$EVENT" in
             push)
               MSG="🚀 Push to main by $ACTOR"
-              URL="${{ github.event.compare }}"
+              URL="$COMPARE_URL"
               ;;
             pull_request)
-              MSG="🔀 Pull Request: ${{ github.event.pull_request.title }}"
-              URL="${{ github.event.pull_request.html_url }}"
+              MSG="🔀 Pull Request: $PR_TITLE"
+              URL="$PR_URL"
               ;;
             pull_request_review)
               MSG="👀 PR Review by $ACTOR"
-              URL="${{ github.event.review.html_url }}"
+              URL="$REVIEW_URL"
               ;;
             issue_comment)
               MSG="💬 PR Comment by $ACTOR"
-              URL="${{ github.event.comment.html_url }}"
+              URL="$COMMENT_URL"
               ;;
             pull_request_review_comment)
               MSG="💭 Review Comment by $ACTOR"
-              URL="${{ github.event.comment.html_url }}"
+              URL="$COMMENT_URL"
               ;;
             issues)
               MSG="🐛 Issue closed by $ACTOR"
-              URL="${{ github.event.issue.html_url }}"
+              URL="$ISSUE_URL"
               ;;
             milestone)
-              MSG="🎯 Milestone closed: ${{ github.event.milestone.title }}"
-              URL="${{ github.event.milestone.html_url }}"
+              MSG="🎯 Milestone closed: $MILESTONE_TITLE"
+              URL="$MILESTONE_URL"
               ;;
             workflow_run)
-              MSG="❌ Workflow Failed: ${{ github.event.workflow_run.name }}"
-              URL="${{ github.event.workflow_run.html_url }}"
+              MSG="🚨 Workflow Failed: $WORKFLOW_NAME ($WORKFLOW_CONCLUSION)"
+              URL="$WORKFLOW_URL"
               ;;
             code_scanning_alert)
               MSG="🚨 Code Scanning Alert"
-              URL="${{ github.event.alert.html_url }}"
+              URL="$ALERT_URL"
               ;;
             secret_scanning_alert)
               MSG="🔐 Secret Scanning Alert"
-              URL="${{ github.event.alert.html_url }}"
+              URL="$ALERT_URL"
               ;;
           esac
 
           echo "msg=$MSG" >> $GITHUB_OUTPUT
           echo "url=$URL" >> $GITHUB_OUTPUT
 
-      - name: Send Discord notification
-        run: |
-          curl \
-            -H "Content-Type: application/json" \
-            -X POST \
-            -d "{\n              \"content\": \"${{ steps.message.outputs.msg }}\n${{ steps.message.outputs.url }}\"\n            }" \
-            "${{ secrets.DISCORD_WEBHOOK }}"
+      - name: Send Discord Notification
+        uses: tsickert/discord-webhook@v7.0.0
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
+          content: |
+            ${{ steps.message.outputs.msg }}
+            ${{ steps.message.outputs.url }}

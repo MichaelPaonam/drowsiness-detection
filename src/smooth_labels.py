@@ -75,6 +75,7 @@ def smooth_session(
     kernel_size: int,
     enforce_monotonic: bool,
 ) -> np.ndarray:
+    """Apply median filtering and optional monotonic constraint to a KSS sequence."""
     smoothed = _median_smooth(kss_seq, kernel_size)
     if enforce_monotonic:
         smoothed = _monotonic_constraint(smoothed)
@@ -85,6 +86,7 @@ def smooth_session(
 
 
 def fig_temporal_smoothing(df: pd.DataFrame, n_examples: int = 4) -> None:
+    """Generate and save a figure showing raw vs. smoothed pseudo-KSS for example sessions."""
     PSEUDO_KSS_DIR.mkdir(parents=True, exist_ok=True)
 
     # Pick subjects with the most windows for clarity
@@ -144,6 +146,7 @@ def run(
     kernel_size: int = 3,
     enforce_monotonic: bool = False,
 ) -> pd.DataFrame:
+    """Run temporal smoothing of pseudo-KSS labels and save results to CSV."""
     log.info("=== Temporal Smoothing ===")
     log.info(
         "method=%s  kernel_size=%d  enforce_monotonic=%s", method, kernel_size, enforce_monotonic
@@ -209,6 +212,7 @@ def run(
 
 
 def setup_logging() -> None:
+    """Configure logging for console output."""
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",

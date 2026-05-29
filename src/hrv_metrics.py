@@ -95,7 +95,7 @@ def compute_window_hrv(
 
 
 def _calculate_time_domain_features(rr_ms: np.ndarray) -> HRVFeatures:
-    """Computes time-domain features from clean RR intervals."""
+    """Compute time-domain HRV features from clean RR intervals in milliseconds."""
     successive_diffs = np.abs(np.diff(rr_ms))
     mean_rr = float(np.mean(rr_ms))
 
