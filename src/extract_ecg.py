@@ -29,7 +29,8 @@ import pyedflib
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from config import DROZY_ROOT, DDD_DIR, ECG_CSV_DIR, OUTPUTS_DIR
+# pylint: disable=wrong-import-position
+from config import DROZY_ROOT, DDD_DIR, ECG_CSV_DIR
 
 log = logging.getLogger(__name__)
 
@@ -39,6 +40,7 @@ PSG_DIR = DROZY_ROOT / "psg"
 # ── data container ────────────────────────────────────────────────────────────
 
 class EdfInfo(NamedTuple):
+    """Container for EDF file metadata and parsing info."""
     path: Path
     dataset: str     # "drozy" or "ddd"
     stem: str        # output filename stem, e.g. "1-1" or "01M_1"
@@ -49,6 +51,7 @@ class EdfInfo(NamedTuple):
 # ── EDF discovery ─────────────────────────────────────────────────────────────
 
 def discover_drozy_edfs() -> list[EdfInfo]:
+    """Discover and parse DROZY EDF files from PSG directory."""
     if not PSG_DIR.exists():
         log.warning("DROZY PSG directory not found: %s", PSG_DIR)
         return []
@@ -76,6 +79,7 @@ def discover_drozy_edfs() -> list[EdfInfo]:
 
 
 def discover_ddd_edfs() -> list[EdfInfo]:
+    """Discover and parse DDD EDF files from DDD directory."""
     if not DDD_DIR.exists():
         log.warning("DDD directory not found: %s", DDD_DIR)
         return []
@@ -170,7 +174,7 @@ def extract_and_save(info: EdfInfo, out_dir: Path) -> bool:
                  out_path.stat().st_size / 1e6)
         return True
 
-    except Exception as exc:
+    except (OSError, ValueError) as exc:
         log.error("  [%s] failed: %s", info.stem, exc)
         return False
 
@@ -178,6 +182,7 @@ def extract_and_save(info: EdfInfo, out_dir: Path) -> bool:
 # ── main ──────────────────────────────────────────────────────────────────────
 
 def run(dataset: str = "all") -> None:
+    """Run ECG extraction pipeline for specified dataset(s)."""
     infos: list[EdfInfo] = []
     if dataset in ("drozy", "all"):
         infos += discover_drozy_edfs()
@@ -202,7 +207,7 @@ def run(dataset: str = "all") -> None:
     nd = len(list(drozy_dir.glob("*.csv"))) if drozy_dir.exists() else 0
     nw = len(list(ddd_dir.glob("*.csv")))   if ddd_dir.exists()   else 0
 
-    print(f"\n=== Summary ===")
+    print("\n=== Summary ===")
     print(f"  Files found   : {len(infos)}")
     print(f"  Processed OK  : {n_ok}")
     print(f"  Failed        : {n_fail}")
@@ -212,6 +217,7 @@ def run(dataset: str = "all") -> None:
 
 
 def setup_logging() -> None:
+    """Configure logging for console output."""
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
