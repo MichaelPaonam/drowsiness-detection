@@ -44,10 +44,7 @@ permissions:
 
 jobs:
   notify:
-    # Only notify for failed workflow runs
-    if: |
-      github.event_name != 'workflow_run' ||
-      github.event.workflow_run.conclusion == 'failure'
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'failure' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -67,6 +64,7 @@ jobs:
           MILESTONE_URL: ${{ github.event.milestone.html_url }}
           WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
           WORKFLOW_URL: ${{ github.event.workflow_run.html_url }}
+          WORKFLOW_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
           ALERT_URL: ${{ github.event.alert.html_url }}
         run: |
           case "$EVENT" in
@@ -99,7 +97,7 @@ jobs:
               URL="$MILESTONE_URL"
               ;;
             workflow_run)
-              MSG="❌ Workflow Failed: $WORKFLOW_NAME"
+              MSG="🚨 Workflow Failed: $WORKFLOW_NAME ($WORKFLOW_CONCLUSION)"
               URL="$WORKFLOW_URL"
               ;;
             code_scanning_alert)
@@ -115,14 +113,10 @@ jobs:
           echo "msg=$MSG" >> $GITHUB_OUTPUT
           echo "url=$URL" >> $GITHUB_OUTPUT
 
-      - name: Send Discord notification
-        env:
-          MSG_OUT: ${{ steps.message.outputs.msg }}
-          URL_OUT: ${{ steps.message.outputs.url }}
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        run: |
-          curl \
-            -H "Content-Type: application/json" \
-            -X POST \
-            -d "{\n              \"content\": \"$MSG_OUT\n$URL_OUT\"\n            }" \
-            "$DISCORD_WEBHOOK"
+      - name: Send Discord Notification
+        uses: tsickert/discord-webhook@v7
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
+          content: |
+            ${{ steps.message.outputs.msg }}
+            ${{ steps.message.outputs.url }}
