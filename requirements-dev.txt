@@ -1,0 +1,8 @@
+# Development dependencies
+# Install with: pip install -r requirements-dev.txt
+
+# Core dependencies (inherited from requirements.txt)
+-r requirements.txt
+
+# Testing
+pytest>=8.0
