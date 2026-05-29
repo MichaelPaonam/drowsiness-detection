@@ -146,12 +146,18 @@ def compute_metrics(
         Dictionary with keys: precision, recall, f1, roc_auc, pr_auc.
     """
     y_pred = (y_proba >= threshold).astype(int)
+    if len(np.unique(y_true)) < 2:
+        roc_auc = float("nan")
+        pr_auc = float("nan")
+    else:
+        roc_auc = float(roc_auc_score(y_true, y_proba))
+        pr_auc = float(average_precision_score(y_true, y_proba))
     return {
         "precision": float(precision_score(y_true, y_pred, zero_division=0)),
         "recall": float(recall_score(y_true, y_pred, zero_division=0)),
         "f1": float(f1_score(y_true, y_pred, zero_division=0)),
-        "roc_auc": float(roc_auc_score(y_true, y_proba)),
-        "pr_auc": float(average_precision_score(y_true, y_proba)),
+        "roc_auc": roc_auc,
+        "pr_auc": pr_auc,
     }
 
 
@@ -433,12 +439,14 @@ def _ensure_plots_dir() -> None:
 
 def plot_roc_curves(
     model_curves: dict[str, tuple[np.ndarray, np.ndarray, float]],
+    suffix: str = "",
 ) -> None:
     """
     Plot and save ROC curves for all models.
 
     Args:
         model_curves: {model_name: (fpr_array, tpr_array, roc_auc_scalar)}.
+        suffix: Optional filename suffix, e.g. "_fixed" or "_loso".
     """
     _ensure_plots_dir()
     fig, ax = plt.subplots(figsize=(6, 5))
@@ -460,7 +468,7 @@ def plot_roc_curves(
     ax.grid(True, alpha=0.3)
     fig.tight_layout()
 
-    out = PLOTS_DIR / "fig_roc_curves.png"
+    out = PLOTS_DIR / f"fig_roc_curves{suffix}.png"
     fig.savefig(out, dpi=FIG_DPI, bbox_inches="tight")
     plt.close(fig)
     log.info("Saved -> %s", out)
@@ -468,12 +476,14 @@ def plot_roc_curves(
 
 def plot_pr_curves(
     model_curves: dict[str, tuple[np.ndarray, np.ndarray, float]],
+    suffix: str = "",
 ) -> None:
     """
     Plot and save precision-recall curves for all models.
 
     Args:
         model_curves: {model_name: (precision_array, recall_array, pr_auc_scalar)}.
+        suffix: Optional filename suffix, e.g. "_fixed" or "_loso".
     """
     _ensure_plots_dir()
     fig, ax = plt.subplots(figsize=(6, 5))
@@ -496,7 +506,7 @@ def plot_pr_curves(
     ax.set_ylim([0.0, 1.05])
     fig.tight_layout()
 
-    out = PLOTS_DIR / "fig_pr_curves.png"
+    out = PLOTS_DIR / f"fig_pr_curves{suffix}.png"
     fig.savefig(out, dpi=FIG_DPI, bbox_inches="tight")
     plt.close(fig)
     log.info("Saved -> %s", out)
