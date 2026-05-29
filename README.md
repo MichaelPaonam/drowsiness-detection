@@ -91,3 +91,6 @@ The detailed implementation and milestone plan is documented in [plan.md](./plan
 - [ECG-Based Driving Fatigue Detection Using Heart Rate Variability Analysis with Mutual Information](https://www.mdpi.com/2078-2489/14/10/539)
 - [Driving fatigue recognition model based on heart rate variability and respiratory rate](https://www.sciopen.com/article/10.16016/j.2097-0927.202203057)
 - [PhysDrive: A Multimodal Remote Physiological Measurement Dataset for In-vehicle Driver Monitoring](https://arxiv.org/html/2507.19172v1#S3)
+
+## Bots
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/MichaelPaonam/drowsiness-detection?utm_source=oss&utm_medium=github&utm_campaign=MichaelPaonam%2Fdrowsiness-detection&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
