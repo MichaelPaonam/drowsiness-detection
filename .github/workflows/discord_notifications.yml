@@ -35,6 +35,8 @@ on:
   workflow_run:
     types:
       - completed
+    workflows:
+      - "*"
 
 permissions:
   contents: read
