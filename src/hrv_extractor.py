@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import argparse
 import logging
-import sys
 from pathlib import Path
 from typing import List, Dict, Tuple
 
@@ -46,7 +45,7 @@ def apply_bandpass_filter(signal: np.ndarray, fs: float) -> np.ndarray:
 def get_ecg_files(dataset: str) -> List[Tuple[Path, str, int, str]]:
     """Discovers and identifies ECG CSV files."""
     entries = []
-    
+
     # DROZY parsing
     if dataset in ("drozy", "all"):
         path = ECG_CSV_DIR / "drozy"
@@ -68,10 +67,11 @@ def get_ecg_files(dataset: str) -> List[Tuple[Path, str, int, str]]:
                     entries.append((p, f"ddd_{volunteer}", int(trial), "ddd"))
                 except ValueError:
                     log.warning("Skipping malformed DDD CSV: %s", p.name)
-                    
+
     return entries
 
 
+# pylint: disable=too-many-arguments,too-many-locals,too-many-positional-arguments
 def process_ecg_file(
     csv_path: Path,
     subject_id: str,
@@ -83,7 +83,7 @@ def process_ecg_file(
     """Processes a single ECG file, extracting features per window."""
     try:
         df = pd.read_csv(csv_path, dtype={"timestamp_sec": float, "ecg": float})
-    except Exception as exc:
+    except (OSError, ValueError, KeyError) as exc:
         log.error("[%s] Failed to load %s: %s", subject_id, csv_path.name, exc)
         return []
 
@@ -106,14 +106,14 @@ def process_ecg_file(
     start = 0
     while start + window_samples <= n_samples:
         end = start + window_samples
-        
+
         features = compute_window_hrv(
-            ecg_filt[start:end], 
-            fs=fs, 
-            subject_id=subject_id, 
+            ecg_filt[start:end],
+            fs=fs,
+            subject_id=subject_id,
             trial_id=trial_id
         )
-        
+
         if features:
             row = {
                 "dataset": dataset,
@@ -126,7 +126,7 @@ def process_ecg_file(
                 **features.to_dict(),
             }
             rows.append(row)
-        
+
         w_idx += 1
         start += step_samples
 
@@ -157,7 +157,7 @@ def run_hrv_extraction(
     OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
     df.to_csv(HRV_WINDOWS_CSV, index=False)
     log.info("Saved %d windows to %s", len(df), HRV_WINDOWS_CSV)
-    
+
     return df
 
 
@@ -165,6 +165,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Extract windowed HRV features")
     parser.add_argument("--dataset", choices=["drozy", "ddd", "all"], default="all")
     args = parser.parse_args()
-    
+
     logging.basicConfig(level=logging.INFO)
     run_hrv_extraction(dataset=args.dataset)

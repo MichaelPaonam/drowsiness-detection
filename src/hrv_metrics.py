@@ -66,7 +66,7 @@ def compute_window_hrv(
     try:
         _, info = nk.ecg_peaks(ecg_signal, sampling_rate=fs, method=RPEAK_METHOD)
         rpeaks = info["ECG_R_Peaks"]
-    except Exception as exc:
+    except (ValueError, KeyError, TypeError) as exc:
         log.error("[%s] R-peak detection failed: %s", ctx, exc)
         return None
 
