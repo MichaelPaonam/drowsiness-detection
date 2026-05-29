@@ -28,6 +28,7 @@ import sys
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -49,6 +50,7 @@ log = logging.getLogger(__name__)
 
 # ── smoothing logic ───────────────────────────────────────────────────────────
 
+
 def _median_smooth(series: np.ndarray, kernel_size: int) -> np.ndarray:
     """
     Median filter with the given kernel size.
@@ -59,9 +61,7 @@ def _median_smooth(series: np.ndarray, kernel_size: int) -> np.ndarray:
     smoothed = medfilt(series.astype(float), kernel_size=k)
     # medfilt can output floats; round back to nearest valid pseudo-KSS level
     valid_levels = np.array([2, 5, 8])
-    rounded = np.array([
-        valid_levels[np.argmin(np.abs(valid_levels - v))] for v in smoothed
-    ])
+    rounded = np.array([valid_levels[np.argmin(np.abs(valid_levels - v))] for v in smoothed])
     return rounded
 
 
@@ -83,12 +83,13 @@ def smooth_session(
 
 # ── temporal smoothing figure ─────────────────────────────────────────────────
 
+
 def fig_temporal_smoothing(df: pd.DataFrame, n_examples: int = 4) -> None:
     PSEUDO_KSS_DIR.mkdir(parents=True, exist_ok=True)
 
     # Pick subjects with the most windows for clarity
     session_counts = df.groupby(["subject_id", "trial_id"]).size()
-    top_sessions   = session_counts.nlargest(n_examples).index.tolist()
+    top_sessions = session_counts.nlargest(n_examples).index.tolist()
 
     fig, axes = plt.subplots(n_examples, 1, figsize=(12, 3 * n_examples), sharex=False)
     if n_examples == 1:
@@ -97,12 +98,28 @@ def fig_temporal_smoothing(df: pd.DataFrame, n_examples: int = 4) -> None:
     for ax, (subj, trial) in zip(axes, top_sessions):
         sub = df[(df["subject_id"] == subj) & (df["trial_id"] == trial)].copy()
         sub = sub.sort_values("window_index")
-        x = sub["window_start_sec"].values / 60   # convert to minutes
+        x = sub["window_start_sec"].values / 60  # convert to minutes
 
-        ax.plot(x, sub["pseudo_kss"].values, "o--", color="#4C9BE8",
-                linewidth=1.2, markersize=4, label="Raw pseudo-KSS", alpha=0.8)
-        ax.plot(x, sub["pseudo_kss_smoothed"].values, "s-", color="#E8614C",
-                linewidth=1.8, markersize=5, label="Smoothed", alpha=0.9)
+        ax.plot(
+            x,
+            sub["pseudo_kss"].values,
+            "o--",
+            color="#4C9BE8",
+            linewidth=1.2,
+            markersize=4,
+            label="Raw pseudo-KSS",
+            alpha=0.8,
+        )
+        ax.plot(
+            x,
+            sub["pseudo_kss_smoothed"].values,
+            "s-",
+            color="#E8614C",
+            linewidth=1.8,
+            markersize=5,
+            label="Smoothed",
+            alpha=0.9,
+        )
         ax.set_yticks([2, 5, 8])
         ax.set_yticklabels(["2 (Alert)", "5 (Trans.)", "8 (Drowsy)"], fontsize=8)
         ax.set_xlabel("Time (minutes)")
@@ -121,14 +138,16 @@ def fig_temporal_smoothing(df: pd.DataFrame, n_examples: int = 4) -> None:
 
 # ── main ──────────────────────────────────────────────────────────────────────
 
+
 def run(
     method: str = "kmeans",
     kernel_size: int = 3,
     enforce_monotonic: bool = False,
 ) -> pd.DataFrame:
     log.info("=== Temporal Smoothing ===")
-    log.info("method=%s  kernel_size=%d  enforce_monotonic=%s",
-             method, kernel_size, enforce_monotonic)
+    log.info(
+        "method=%s  kernel_size=%d  enforce_monotonic=%s", method, kernel_size, enforce_monotonic
+    )
 
     if not HRV_WINDOWS_PSEUDO_CSV.exists():
         raise FileNotFoundError(
@@ -160,25 +179,21 @@ def run(
             log.debug("[%s t%s] %d/%d windows changed label", subj, trial, changed, len(raw))
         changed_total += changed
 
-    df["pseudo_label_smoothed"] = (
-        df["pseudo_kss_smoothed"] >= KSS_DROWSY_THRESHOLD
-    ).astype(int)
+    df["pseudo_label_smoothed"] = (df["pseudo_kss_smoothed"] >= KSS_DROWSY_THRESHOLD).astype(int)
 
     # Summary
     total = len(df)
-    pct   = changed_total / total * 100 if total > 0 else 0.0
-    print(f"\n=== Smoothing Summary ===")
+    pct = changed_total / total * 100 if total > 0 else 0.0
+    print("\n=== Smoothing Summary ===")
     print(f"  Windows total     : {total}")
     print(f"  Windows changed   : {changed_total}  ({pct:.1f}%)")
 
     for ds, grp in df.groupby("dataset"):
-        ds_changed = int((
-            grp["pseudo_kss_smoothed"].values != grp[src_col].values
-        ).sum())
+        ds_changed = int((grp["pseudo_kss_smoothed"].values != grp[src_col].values).sum())
         print(f"  {ds.upper():6s} changed: {ds_changed}/{len(grp)}")
 
     label_dist = df["pseudo_label_smoothed"].value_counts().sort_index()
-    print(f"\n  Smoothed label distribution:")
+    print("\n  Smoothed label distribution:")
     print(f"    Alert  (0): {label_dist.get(0, 0)}")
     print(f"    Drowsy (1): {label_dist.get(1, 0)}")
     print()
@@ -202,19 +217,22 @@ def setup_logging() -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Temporal smoothing of pseudo-KSS labels"
-    )
+    parser = argparse.ArgumentParser(description="Temporal smoothing of pseudo-KSS labels")
     parser.add_argument(
-        "--method", choices=["kmeans", "gmm"], default="kmeans",
+        "--method",
+        choices=["kmeans", "gmm"],
+        default="kmeans",
         help="Which clustering method's pseudo_kss to smooth (default: kmeans)",
     )
     parser.add_argument(
-        "--kernel-size", type=int, default=3,
+        "--kernel-size",
+        type=int,
+        default=3,
         help="Median filter kernel size in windows (default: 3)",
     )
     parser.add_argument(
-        "--enforce-monotonic", action="store_true",
+        "--enforce-monotonic",
+        action="store_true",
         help="Apply cumulative-max constraint (drowsiness only increases)",
     )
     args = parser.parse_args()

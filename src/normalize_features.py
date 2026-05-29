@@ -29,8 +29,8 @@ import logging
 import sys
 from pathlib import Path
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -42,6 +42,7 @@ ZNORM_COLS = [f"{c}_znorm" for c in HRV_FEATURE_COLS]
 
 
 # ── normalization ─────────────────────────────────────────────────────────────
+
 
 def normalize_per_subject(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -55,15 +56,14 @@ def normalize_per_subject(df: pd.DataFrame) -> pd.DataFrame:
 
     for subj, grp in df.groupby("subject_id"):
         idx = grp.index
-        n   = len(grp)
+        n = len(grp)
         for col, zcol in zip(HRV_FEATURE_COLS, ZNORM_COLS):
             vals = grp[col].values.astype(float)
-            mu   = vals.mean()
+            mu = vals.mean()
             sigma = vals.std(ddof=1) if n > 1 else 0.0
             if sigma == 0.0:
                 if n > 1:
-                    log.warning("[%s] Feature '%s' has zero std — znorm set to 0",
-                                subj, col)
+                    log.warning("[%s] Feature '%s' has zero std — znorm set to 0", subj, col)
                 df.loc[idx, zcol] = 0.0
             else:
                 df.loc[idx, zcol] = (vals - mu) / sigma
@@ -72,6 +72,7 @@ def normalize_per_subject(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # ── per-subject summary ───────────────────────────────────────────────────────
+
 
 def print_subject_summary(df: pd.DataFrame) -> None:
     print("\n=== Per-Subject Feature Summary (raw values) ===")
@@ -93,18 +94,17 @@ def print_subject_summary(df: pd.DataFrame) -> None:
 
 # ── main ──────────────────────────────────────────────────────────────────────
 
+
 def run() -> pd.DataFrame:
     log.info("=== Feature Normalization ===")
 
     if not HRV_WINDOWS_CSV.exists():
         raise FileNotFoundError(
-            f"hrv_windows.csv not found at {HRV_WINDOWS_CSV}. "
-            "Run extract_hrv_windows.py first."
+            f"hrv_windows.csv not found at {HRV_WINDOWS_CSV}. Run extract_hrv_windows.py first."
         )
 
     df = pd.read_csv(HRV_WINDOWS_CSV)
-    log.info("Loaded hrv_windows.csv: %d rows, %d subjects",
-             len(df), df["subject_id"].nunique())
+    log.info("Loaded hrv_windows.csv: %d rows, %d subjects", len(df), df["subject_id"].nunique())
 
     # Drop rows missing HRV features
     before = len(df)

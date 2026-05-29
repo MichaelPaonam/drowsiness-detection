@@ -11,11 +11,11 @@ from pathlib import Path
 import pandas as pd
 
 from config import (
-    KSS_FILE,
     EXCLUDED_TESTS,
-    KSS_DROWSY_THRESHOLD,
-    SPLIT_MAP,
     HRV_FEATURE_COLS,
+    KSS_DROWSY_THRESHOLD,
+    KSS_FILE,
+    SPLIT_MAP,
 )
 
 log = logging.getLogger(__name__)
@@ -24,6 +24,7 @@ log = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # KSS loading and label assignment
 # ---------------------------------------------------------------------------
+
 
 def load_kss() -> pd.DataFrame:
     """
@@ -44,27 +45,28 @@ def load_kss() -> pd.DataFrame:
             for test_idx, score_str in enumerate(parts):
                 test_id = test_idx + 1  # 1-indexed
                 kss_raw = int(score_str)
-                is_excluded = (
-                    kss_raw == 0
-                    or (subject_id, test_id) in EXCLUDED_TESTS
-                )
+                is_excluded = kss_raw == 0 or (subject_id, test_id) in EXCLUDED_TESTS
                 label = None
                 if not is_excluded:
                     label = 1 if kss_raw >= KSS_DROWSY_THRESHOLD else 0
-                rows.append({
-                    "subject_id":  subject_id,
-                    "test_id":     test_id,
-                    "kss_raw":     kss_raw,
-                    "label":       label,
-                    "severe_flag": kss_raw == 9 and not is_excluded,
-                    "excluded":    is_excluded,
-                })
+                rows.append(
+                    {
+                        "subject_id": subject_id,
+                        "test_id": test_id,
+                        "kss_raw": kss_raw,
+                        "label": label,
+                        "severe_flag": kss_raw == 9 and not is_excluded,
+                        "excluded": is_excluded,
+                    }
+                )
 
     df = pd.DataFrame(rows)
     n_excluded = df["excluded"].sum()
     log.info(
         "KSS loaded: %d tests total, %d excluded (%d usable).",
-        len(df), n_excluded, len(df) - n_excluded,
+        len(df),
+        n_excluded,
+        len(df) - n_excluded,
     )
     return df
 
@@ -97,6 +99,7 @@ def assign_split_column(df: pd.DataFrame) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 # DataFrame splitting
 # ---------------------------------------------------------------------------
+
 
 def split_features_df(features_df: pd.DataFrame) -> dict[str, pd.DataFrame]:
     """
@@ -144,6 +147,7 @@ def save_splits(
 # Convenience: get feature matrix and labels
 # ---------------------------------------------------------------------------
 
+
 def get_xy(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
     """Extract feature matrix X and label vector y from a split DataFrame."""
     missing = [c for c in HRV_FEATURE_COLS if c not in df.columns]
@@ -157,6 +161,7 @@ def get_xy(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
 # ---------------------------------------------------------------------------
 # Validation
 # ---------------------------------------------------------------------------
+
 
 def _validate_split_integrity(df: pd.DataFrame) -> None:
     """Raise or warn on split integrity violations."""
