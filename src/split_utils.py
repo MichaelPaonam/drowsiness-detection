@@ -11,11 +11,11 @@ from pathlib import Path
 import pandas as pd
 
 from config import (
-    KSS_FILE,
     EXCLUDED_TESTS,
-    KSS_DROWSY_THRESHOLD,
-    SPLIT_MAP,
     HRV_FEATURE_COLS,
+    KSS_DROWSY_THRESHOLD,
+    KSS_FILE,
+    SPLIT_MAP,
 )
 
 log = logging.getLogger(__name__)

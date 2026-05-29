@@ -30,7 +30,7 @@ import pyedflib
 sys.path.insert(0, str(Path(__file__).parent))
 
 # pylint: disable=wrong-import-position
-from config import DROZY_ROOT, DDD_DIR, ECG_CSV_DIR
+from config import DDD_DIR, DROZY_ROOT, ECG_CSV_DIR
 
 log = logging.getLogger(__name__)
 

@@ -39,6 +39,7 @@ import sys
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -49,8 +50,8 @@ from sklearn.metrics import (
     accuracy_score,
     cohen_kappa_score,
     confusion_matrix,
-    silhouette_score,
     silhouette_samples,
+    silhouette_score,
 )
 from sklearn.mixture import GaussianMixture
 from sklearn.preprocessing import StandardScaler
@@ -201,7 +202,7 @@ def validate_against_drozy(df: pd.DataFrame, method: str) -> None:
     print(f"  Windows compared : {len(valid)}")
     print(f"  Accuracy         : {acc:.4f}")
     print(f"  Cohen's kappa    : {kappa:.4f}")
-    print(f"  Confusion matrix (rows=true, cols=pred):")
+    print("  Confusion matrix (rows=true, cols=pred):")
     print(f"    TN={cm[0,0]}  FP={cm[0,1]}")
     print(f"    FN={cm[1,0]}  TP={cm[1,1]}")
     print()

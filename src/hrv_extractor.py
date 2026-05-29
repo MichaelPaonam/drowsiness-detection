@@ -9,7 +9,7 @@ from __future__ import annotations
 import argparse
 import logging
 from pathlib import Path
-from typing import List, Dict, Tuple
+from typing import Dict, List, Tuple
 
 import numpy as np
 import pandas as pd

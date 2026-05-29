@@ -28,6 +28,7 @@ import sys
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -167,7 +168,7 @@ def run(
     # Summary
     total = len(df)
     pct   = changed_total / total * 100 if total > 0 else 0.0
-    print(f"\n=== Smoothing Summary ===")
+    print("\n=== Smoothing Summary ===")
     print(f"  Windows total     : {total}")
     print(f"  Windows changed   : {changed_total}  ({pct:.1f}%)")
 
@@ -178,7 +179,7 @@ def run(
         print(f"  {ds.upper():6s} changed: {ds_changed}/{len(grp)}")
 
     label_dist = df["pseudo_label_smoothed"].value_counts().sort_index()
-    print(f"\n  Smoothed label distribution:")
+    print("\n  Smoothed label distribution:")
     print(f"    Alert  (0): {label_dist.get(0, 0)}")
     print(f"    Drowsy (1): {label_dist.get(1, 0)}")
     print()
