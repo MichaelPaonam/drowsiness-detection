@@ -41,3 +41,29 @@ def test_get_xy_requires_all_feature_columns():
 
     with pytest.raises(ValueError, match="Feature columns missing"):
         get_xy(df)
+
+
+def test_get_xy_positive_path():
+    # Construct a dataframe with all required feature columns and a label column
+    df = pd.DataFrame([_row(1, 0), _row(2, 1), _row(3, 0)])
+
+    X, y = get_xy(df)
+
+    # X should contain exactly the HRV feature columns in the given order
+    assert list(X.columns) == HRV_FEATURE_COLS
+
+    # All rows should be included (get_xy does not filter)
+    assert len(X) == 3
+    assert len(y) == 3
+
+    # Indices should be preserved
+    assert list(X.index) == [0, 1, 2]
+    assert list(y.index) == [0, 1, 2]
+
+    # y should match the label column for all rows
+    assert list(y) == [0, 1, 0]
+
+    # Feature values should correspond to subject_id (as set by _row helper)
+    expected_values = [1.0, 2.0, 3.0]
+    for col in HRV_FEATURE_COLS:
+        assert list(X[col]) == expected_values
