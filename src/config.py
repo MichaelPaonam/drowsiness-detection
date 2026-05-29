@@ -101,6 +101,13 @@ HRV_FEATURE_COLS = [
     "cv_rr",
 ]
 
+SELECTED_FEATURES = [
+    'sdnn_znorm',
+    'cv_rr_znorm',
+    'rmssd_znorm',
+    'pnn50_znorm'
+]
+
 # ── Pipeline output file paths ────────────────────────────────────────────────
 
 HRV_WINDOWS_CSV = OUTPUTS_DIR / "hrv_windows.csv"
