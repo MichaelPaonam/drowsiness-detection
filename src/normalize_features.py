@@ -75,6 +75,7 @@ def normalize_per_subject(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def print_subject_summary(df: pd.DataFrame) -> None:
+    """Print a summary table of raw HRV feature statistics per subject."""
     print("\n=== Per-Subject Feature Summary (raw values) ===")
     fmt_header = f"  {'Subject':15s} {'N':>4s}"
     for col in HRV_FEATURE_COLS:
@@ -96,6 +97,7 @@ def print_subject_summary(df: pd.DataFrame) -> None:
 
 
 def run() -> pd.DataFrame:
+    """Run per-subject z-score normalization of HRV features and save to CSV."""
     log.info("=== Feature Normalization ===")
 
     if not HRV_WINDOWS_CSV.exists():
@@ -131,6 +133,7 @@ def run() -> pd.DataFrame:
 
 
 def setup_logging() -> None:
+    """Configure logging for console output."""
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",

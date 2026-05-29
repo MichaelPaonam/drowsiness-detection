@@ -220,6 +220,7 @@ def validate_against_drozy(df: pd.DataFrame, method: str) -> None:
 
 
 def _cluster_colors(ordered_labels: np.ndarray) -> list[str]:
+    """Map ordered cluster labels to their hex color codes for visualization."""
     names = [CLUSTER_NAMES[cluster_id] for cluster_id in ordered_labels]
     return [CLUSTER_COLORS[n] for n in names]
 
@@ -230,6 +231,7 @@ def fig_cluster_scatter(
     labels_km: np.ndarray | None,
     labels_gmm: np.ndarray | None,
 ) -> None:
+    """Generate and save a 2-D PCA scatter plot of clustered HRV windows."""
     pca = PCA(n_components=2, random_state=42)
     X2 = pca.fit_transform(X_scaled)
     var = pca.explained_variance_ratio_
@@ -261,6 +263,7 @@ def fig_cluster_scatter(
 
 
 def fig_cluster_distribution(df: pd.DataFrame) -> None:
+    """Generate and save a bar chart of pseudo-KSS distribution by dataset and method."""
     fig, axes = plt.subplots(1, 2, figsize=(12, 4))
 
     for ax, method in zip(axes, ["kmeans", "gmm"]):
@@ -345,6 +348,7 @@ def fig_silhouette(
     labels_gmm: np.ndarray | None,
     n_clusters: int,
 ) -> None:
+    """Generate and save a silhouette plot for clustering quality assessment."""
     panels = [
         (labels_item, method)
         for labels_item, method in [(labels_km, "KMeans"), (labels_gmm, "GMM")]
@@ -391,6 +395,7 @@ def run(
     method: str = "both",
     n_clusters: int = N_CLUSTERS,
 ) -> pd.DataFrame:
+    """Run pseudo-KSS label generation via HRV clustering and save results to CSV."""
     log.info("=== Pseudo-KSS Generation ===")
     log.info("Method=%s  n_clusters=%d", method, n_clusters)
 
@@ -490,6 +495,7 @@ def run(
 
 
 def setup_logging() -> None:
+    """Configure logging for console output."""
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",

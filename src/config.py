@@ -12,6 +12,11 @@ PROJECT_ROOT = Path(__file__).parent.parent
 
 
 def _env_path(var: str, default: Path) -> Path:
+    """Load a path from environment variable, falling back to default if not set.
+    
+    Supports both absolute and relative paths. Relative paths are resolved
+    relative to PROJECT_ROOT.
+    """
     raw = os.getenv(var)
     if raw is None:
         return default
