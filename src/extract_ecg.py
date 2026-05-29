@@ -30,7 +30,7 @@ import pyedflib
 sys.path.insert(0, str(Path(__file__).parent))
 
 # pylint: disable=wrong-import-position
-from config import DROZY_ROOT, DDD_DIR, ECG_CSV_DIR
+from config import DDD_DIR, DROZY_ROOT, ECG_CSV_DIR
 
 log = logging.getLogger(__name__)
 
@@ -39,16 +39,19 @@ PSG_DIR = DROZY_ROOT / "psg"
 
 # ── data container ────────────────────────────────────────────────────────────
 
+
 class EdfInfo(NamedTuple):
     """Container for EDF file metadata and parsing info."""
+
     path: Path
-    dataset: str     # "drozy" or "ddd"
-    stem: str        # output filename stem, e.g. "1-1" or "01M_1"
+    dataset: str  # "drozy" or "ddd"
+    stem: str  # output filename stem, e.g. "1-1" or "01M_1"
     subject_id: str  # unified: "drozy_s01" or "ddd_01M"
     trial_id: int
 
 
 # ── EDF discovery ─────────────────────────────────────────────────────────────
+
 
 def discover_drozy_edfs() -> list[EdfInfo]:
     """Discover and parse DROZY EDF files from PSG directory."""
@@ -68,13 +71,15 @@ def discover_drozy_edfs() -> list[EdfInfo]:
         except ValueError:
             log.warning("Cannot parse subject/test from: %s", edf_path.name)
             continue
-        infos.append(EdfInfo(
-            path=edf_path,
-            dataset="drozy",
-            stem=stem,
-            subject_id=f"drozy_s{subj_int:02d}",
-            trial_id=trial_int,
-        ))
+        infos.append(
+            EdfInfo(
+                path=edf_path,
+                dataset="drozy",
+                stem=stem,
+                subject_id=f"drozy_s{subj_int:02d}",
+                trial_id=trial_int,
+            )
+        )
     return infos
 
 
@@ -92,23 +97,26 @@ def discover_ddd_edfs() -> list[EdfInfo]:
         if len(parts) != 2:
             log.warning("Skipping unrecognised DDD filename: %s", edf_path.name)
             continue
-        volunteer_id = parts[0]   # "01M"
+        volunteer_id = parts[0]  # "01M"
         try:
             trial_int = int(parts[1])
         except ValueError:
             log.warning("Cannot parse trial from: %s", edf_path.name)
             continue
-        infos.append(EdfInfo(
-            path=edf_path,
-            dataset="ddd",
-            stem=stem,
-            subject_id=f"ddd_{volunteer_id}",
-            trial_id=trial_int,
-        ))
+        infos.append(
+            EdfInfo(
+                path=edf_path,
+                dataset="ddd",
+                stem=stem,
+                subject_id=f"ddd_{volunteer_id}",
+                trial_id=trial_int,
+            )
+        )
     return infos
 
 
 # ── ECG channel search ────────────────────────────────────────────────────────
+
 
 def find_ecg_channel_index(labels: list[str]) -> int | None:
     """
@@ -134,6 +142,7 @@ def find_ecg_channel_index(labels: list[str]) -> int | None:
 
 # ── extraction ────────────────────────────────────────────────────────────────
 
+
 def extract_and_save(info: EdfInfo, out_dir: Path) -> bool:
     """
     Open the EDF, find the ECG channel, extract raw signal, save to CSV.
@@ -150,28 +159,34 @@ def extract_and_save(info: EdfInfo, out_dir: Path) -> bool:
             ecg_idx = find_ecg_channel_index(labels)
 
             if ecg_idx is None:
-                log.warning("  [%s] No ECG/EKG channel found. Available: %s",
-                            info.stem, labels)
+                log.warning("  [%s] No ECG/EKG channel found. Available: %s", info.stem, labels)
                 return False
 
             fs = float(edf.getSampleFrequency(ecg_idx))
             ecg_raw = edf.readSignal(ecg_idx).astype(np.float32)
             duration_sec = len(ecg_raw) / fs
 
-            log.info("  [%s] channel='%s'  fs=%.0f Hz  duration=%.1f s  samples=%d",
-                     info.stem, labels[ecg_idx], fs, duration_sec, len(ecg_raw))
+            log.info(
+                "  [%s] channel='%s'  fs=%.0f Hz  duration=%.1f s  samples=%d",
+                info.stem,
+                labels[ecg_idx],
+                fs,
+                duration_sec,
+                len(ecg_raw),
+            )
 
         # Build CSV — timestamp_sec is exact (float64) but ecg is float32
         n = len(ecg_raw)
         timestamps = (np.arange(n) / fs).astype(np.float64)
-        df = pd.DataFrame({
-            "timestamp_sec": timestamps,
-            "ecg": ecg_raw,
-        })
+        df = pd.DataFrame(
+            {
+                "timestamp_sec": timestamps,
+                "ecg": ecg_raw,
+            }
+        )
         out_dir.mkdir(parents=True, exist_ok=True)
         df.to_csv(out_path, index=False, float_format="%.7g")
-        log.info("  -> saved %s  (%.1f MB)", out_path.name,
-                 out_path.stat().st_size / 1e6)
+        log.info("  -> saved %s  (%.1f MB)", out_path.name, out_path.stat().st_size / 1e6)
         return True
 
     except (OSError, ValueError) as exc:
@@ -180,6 +195,7 @@ def extract_and_save(info: EdfInfo, out_dir: Path) -> bool:
 
 
 # ── main ──────────────────────────────────────────────────────────────────────
+
 
 def run(dataset: str = "all") -> None:
     """Run ECG extraction pipeline for specified dataset(s)."""
@@ -203,9 +219,9 @@ def run(dataset: str = "all") -> None:
             n_fail += 1
 
     drozy_dir = ECG_CSV_DIR / "drozy"
-    ddd_dir   = ECG_CSV_DIR / "ddd"
+    ddd_dir = ECG_CSV_DIR / "ddd"
     nd = len(list(drozy_dir.glob("*.csv"))) if drozy_dir.exists() else 0
-    nw = len(list(ddd_dir.glob("*.csv")))   if ddd_dir.exists()   else 0
+    nw = len(list(ddd_dir.glob("*.csv"))) if ddd_dir.exists() else 0
 
     print("\n=== Summary ===")
     print(f"  Files found   : {len(infos)}")
@@ -228,7 +244,9 @@ def setup_logging() -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Extract ECG signals from EDF files to CSV")
     parser.add_argument(
-        "--dataset", choices=["drozy", "ddd", "all"], default="all",
+        "--dataset",
+        choices=["drozy", "ddd", "all"],
+        default="all",
         help="Which dataset(s) to process (default: all)",
     )
     args = parser.parse_args()
