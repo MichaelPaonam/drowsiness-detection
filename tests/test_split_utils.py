@@ -19,10 +19,11 @@ def test_assign_split_column_respects_fixed_split_and_exclusions():
 
     result = assign_split_column(df)
 
-    assert result.loc[0, "split"] == "train"
-    assert result.loc[1, "split"] == "val"
-    assert result.loc[2, "split"] == "test"
-    assert pd.isna(result.loc[3, "split"])
+    by_subject = result.set_index("subject_id")["split"]
+    assert by_subject.loc[1] == "train"
+    assert by_subject.loc[3] == "val"
+    assert by_subject.loc[12] == "test"
+    assert pd.isna(by_subject.loc[99])
 
 
 def test_split_features_df_keeps_subjects_in_single_splits():
