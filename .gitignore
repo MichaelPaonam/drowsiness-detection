@@ -47,6 +47,7 @@ Thumbs.db
 # Environment files
 .env
 .env.*
+!.env.example
 
 # Data science and experiment outputs
 data/raw/
@@ -69,5 +70,4 @@ outputs/
 *.pyc
 .claude/
 DROZY/
-doi_10_5061_dryad_5tb2rbp9c__v20230825/
 AGENTS.md
