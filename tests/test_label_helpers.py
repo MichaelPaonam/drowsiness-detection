@@ -1,7 +1,6 @@
 import numpy as np
 import pytest
 
-from generate_pseudo_kss import run_kmeans, _parse_drozy_ids
 from smooth_labels import smooth_session
 
 
@@ -10,6 +9,8 @@ def test_run_kmeans_orders_clusters_by_sdnn_descending():
     Test that run_kmeans orders clusters by SDNN descending (highest SDNN → label 0).
     This validates the critical invariant that drowsiness is associated with lower SDNN.
     """
+    from generate_pseudo_kss import run_kmeans
+
     # Create synthetic data with three clear clusters:
     # Cluster A: high SDNN (alert)
     # Cluster B: mid SDNN (transitional)
@@ -38,6 +39,8 @@ def test_run_kmeans_produces_valid_label_range():
     Test that run_kmeans produces labels in the range [0, 1, 2],
     which map to pseudo-KSS values [2, 5, 8].
     """
+    from generate_pseudo_kss import run_kmeans
+
     np.random.seed(42)
     X = np.random.randn(30, 2)
     
@@ -52,6 +55,8 @@ def test_parse_drozy_ids_extracts_subject_numbers():
     Test the critical invariant that DROZY subject IDs follow a specific format.
     This is a domain-critical parsing utility used throughout the pipeline.
     """
+    from generate_pseudo_kss import _parse_drozy_ids
+
     assert _parse_drozy_ids("drozy_s01") == 1
     assert _parse_drozy_ids("drozy_s14") == 14
     assert _parse_drozy_ids("ddd_01M") is None

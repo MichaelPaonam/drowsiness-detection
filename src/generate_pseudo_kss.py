@@ -38,9 +38,6 @@ import logging
 import sys
 from pathlib import Path
 
-import matplotlib
-
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -472,6 +469,10 @@ def run(
     OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
     df.to_csv(HRV_WINDOWS_PSEUDO_CSV, index=False)
     log.info("Pseudo-labeled CSV saved -> %s  (%d rows)", HRV_WINDOWS_PSEUDO_CSV, len(df))
+
+    # Set matplotlib backend before generating figures (deferred to avoid side effects during import)
+    import matplotlib
+    matplotlib.use("Agg")
 
     # Figures
     PSEUDO_KSS_DIR.mkdir(parents=True, exist_ok=True)
