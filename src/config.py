@@ -1,22 +1,36 @@
 """Central configuration for the drowsiness detection pipeline."""
 
+import os
 from pathlib import Path
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Root of the project (one level above src/)
 PROJECT_ROOT = Path(__file__).parent.parent
 
+
+def _env_path(var: str, default: Path) -> Path:
+    raw = os.getenv(var)
+    if raw is None:
+        return default
+    p = Path(raw)
+    return p if p.is_absolute() else PROJECT_ROOT / p
+
+
 # ── Dataset paths (read-only) ─────────────────────────────────────────────────
 
-DROZY_ROOT = PROJECT_ROOT / "DROZY"
-DDD_DIR    = PROJECT_ROOT / "doi_10_5061_dryad_5tb2rbp9c__v20230825"
+DROZY_ROOT = _env_path("DROZY_ROOT", PROJECT_ROOT / "data" / "raw" / "DROZY")
+DDD_DIR    = _env_path("DDD_DIR",    PROJECT_ROOT / "data" / "raw" / "DDD")
 
 PSG_DIR  = DROZY_ROOT / "psg"
 KSS_FILE = DROZY_ROOT / "KSS.txt"
 
 # ── Output directories ────────────────────────────────────────────────────────
 
-OUTPUTS_DIR   = PROJECT_ROOT / "outputs"
-ECG_CSV_DIR   = OUTPUTS_DIR / "ecg_csv"
+OUTPUTS_DIR    = _env_path("OUTPUTS_DIR",   PROJECT_ROOT / "outputs")
+ECG_CSV_DIR    = _env_path("ECG_CSV_DIR",   PROJECT_ROOT / "data" / "preprocessed" / "ecg_csv")
 PSEUDO_KSS_DIR = OUTPUTS_DIR / "pseudo_kss"
 
 OUTPUTS_DIR.mkdir(exist_ok=True)
