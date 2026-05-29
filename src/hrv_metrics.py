@@ -84,9 +84,7 @@ def compute_window_hrv(
 
     # Pass 2: Relative outlier removal
     median_rr = np.median(rr_clean)
-    rr_clean = rr_clean[
-        np.abs(rr_clean - median_rr) <= RR_OUTLIER_THRESHOLD * median_rr
-    ]
+    rr_clean = rr_clean[np.abs(rr_clean - median_rr) <= RR_OUTLIER_THRESHOLD * median_rr]
 
     # 4. Validate interval count
     if len(rr_clean) < MIN_RR_INTERVALS:
@@ -108,9 +106,7 @@ def _calculate_time_domain_features(rr_ms: np.ndarray) -> HRVFeatures:
         mean_rr=mean_rr,
         mean_hr=60000.0 / mean_rr if mean_rr > 0 else 0.0,
         sdnn=float(np.std(rr_ms, ddof=1)),
-        rmssd=float(np.sqrt(np.mean(successive_diffs**2)))
-        if len(successive_diffs) > 0
-        else 0.0,
+        rmssd=float(np.sqrt(np.mean(successive_diffs**2))) if len(successive_diffs) > 0 else 0.0,
         nn50=nn50,
         pnn50=pnn50,
         cv_rr=float(np.std(rr_ms, ddof=1) / mean_rr) if mean_rr > 0 else 0.0,

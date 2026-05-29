@@ -108,10 +108,7 @@ def process_ecg_file(
         end = start + window_samples
 
         features = compute_window_hrv(
-            ecg_filt[start:end],
-            fs=fs,
-            subject_id=subject_id,
-            trial_id=trial_id
+            ecg_filt[start:end], fs=fs, subject_id=subject_id, trial_id=trial_id
         )
 
         if features:
@@ -146,9 +143,7 @@ def run_hrv_extraction(
 
     all_rows = []
     for csv_path, subj, trial, ds_tag in files:
-        all_rows.extend(
-            process_ecg_file(csv_path, subj, trial, ds_tag, window_sec, step_sec)
-        )
+        all_rows.extend(process_ecg_file(csv_path, subj, trial, ds_tag, window_sec, step_sec))
 
     if not all_rows:
         return pd.DataFrame()
