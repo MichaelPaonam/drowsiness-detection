@@ -1,0 +1,113 @@
+﻿name: Discord Notifications
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - closed
+
+  pull_request_review:
+    types:
+      - submitted
+
+  issue_comment:
+    types:
+      - created
+
+  pull_request_review_comment:
+    types:
+      - created
+
+  issues:
+    types:
+      - closed
+
+  milestone:
+    types:
+      - closed
+
+  workflow_run:
+    types:
+      - completed
+    workflows:
+      - "*"
+
+permissions:
+  contents: read
+  security-events: read
+
+jobs:
+  notify:
+    # Only notify for failed workflow runs
+    if: |
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Build message
+        id: message
+        run: |
+          EVENT="${{ github.event_name }}"
+          ACTOR="${{ github.actor }}"
+          REPO="${{ github.repository }}"
+
+          case "$EVENT" in
+            push)
+              MSG="🚀 Push to main by $ACTOR"
+              URL="${{ github.event.compare }}"
+              ;;
+            pull_request)
+              MSG="🔀 Pull Request: ${{ github.event.pull_request.title }}"
+              URL="${{ github.event.pull_request.html_url }}"
+              ;;
+            pull_request_review)
+              MSG="👀 PR Review by $ACTOR"
+              URL="${{ github.event.review.html_url }}"
+              ;;
+            issue_comment)
+              MSG="💬 PR Comment by $ACTOR"
+              URL="${{ github.event.comment.html_url }}"
+              ;;
+            pull_request_review_comment)
+              MSG="💭 Review Comment by $ACTOR"
+              URL="${{ github.event.comment.html_url }}"
+              ;;
+            issues)
+              MSG="🐛 Issue closed by $ACTOR"
+              URL="${{ github.event.issue.html_url }}"
+              ;;
+            milestone)
+              MSG="🎯 Milestone closed: ${{ github.event.milestone.title }}"
+              URL="${{ github.event.milestone.html_url }}"
+              ;;
+            workflow_run)
+              MSG="❌ Workflow Failed: ${{ github.event.workflow_run.name }}"
+              URL="${{ github.event.workflow_run.html_url }}"
+              ;;
+            code_scanning_alert)
+              MSG="🚨 Code Scanning Alert"
+              URL="${{ github.event.alert.html_url }}"
+              ;;
+            secret_scanning_alert)
+              MSG="🔐 Secret Scanning Alert"
+              URL="${{ github.event.alert.html_url }}"
+              ;;
+          esac
+
+          echo "msg=$MSG" >> $GITHUB_OUTPUT
+          echo "url=$URL" >> $GITHUB_OUTPUT
+
+      - name: Send Discord notification
+        run: |
+          curl \
+            -H "Content-Type: application/json" \
+            -X POST \
+            -d "{\n              \"content\": \"${{ steps.message.outputs.msg }}\n${{ steps.message.outputs.url }}\"\n            }" \
+            "${{ secrets.DISCORD_WEBHOOK }}"
