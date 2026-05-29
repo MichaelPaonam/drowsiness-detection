@@ -119,7 +119,7 @@ def find_ecg_channel_index(labels: list[str]) -> int | None:
       2. Substring match: label contains "ecg" or "ekg" (case-insensitive)
     Returns None if not found.
     """
-    clean = [l.strip() for l in labels]
+    clean = [label.strip() for label in labels]
     # Exact match first
     for exact in ("ECG", "EKG", "ecg", "ekg"):
         if exact in clean:
@@ -146,7 +146,7 @@ def extract_and_save(info: EdfInfo, out_dir: Path) -> bool:
 
     try:
         with pyedflib.EdfReader(str(info.path)) as edf:
-            labels = [l.strip() for l in edf.getSignalLabels()]
+            labels = [label.strip() for label in edf.getSignalLabels()]
             ecg_idx = find_ecg_channel_index(labels)
 
             if ecg_idx is None:
