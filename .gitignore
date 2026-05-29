@@ -51,6 +51,7 @@ Thumbs.db
 
 # Data science and experiment outputs
 data/raw/
+data/preprocessed/
 data/processed/
 data/external/
 artifacts/
