@@ -330,7 +330,6 @@ def _run_loso(loader: SubjectWiseDataLoader) -> dict[str, Any]:
         mean_precision, mean_recall, mean_f1, model (last fold's fitted model).
     """
     folds = loader.get_loso_folds()
-    subjects = sorted(loader.df["subject_id"].unique())
     feature_cols = loader.feature_cols
     target_col = loader.target_col
 
@@ -339,7 +338,8 @@ def _run_loso(loader: SubjectWiseDataLoader) -> dict[str, Any]:
     }
     models_last: dict[str, Any] = {}
 
-    for fold_idx, (fold, subject) in enumerate(zip(folds, subjects)):
+    for fold_idx, fold in enumerate(folds):
+        held_out_subject = fold["test"]["subject_id"].iloc[0]
         n_test = len(fold["test"])
         n_pos = int(fold["test"][target_col].sum())
 
@@ -348,7 +348,7 @@ def _run_loso(loader: SubjectWiseDataLoader) -> dict[str, Any]:
             log.warning(
                 "Fold %d (subject=%s): single-class test (%d pos / %d total) — skipped.",
                 fold_idx + 1,
-                subject,
+                held_out_subject,
                 n_pos,
                 n_test,
             )
@@ -366,7 +366,7 @@ def _run_loso(loader: SubjectWiseDataLoader) -> dict[str, Any]:
                 {
                     "model": name,
                     "fold": fold_idx + 1,
-                    "held_out_subject": subject,
+                    "held_out_subject": held_out_subject,
                     "n_train": len(fold["train"]),
                     "n_test": n_test,
                     "n_pos": n_pos,
@@ -380,7 +380,7 @@ def _run_loso(loader: SubjectWiseDataLoader) -> dict[str, Any]:
             "Fold %2d/%d | %s | XGB prec=%.3f rec=%.3f | CB prec=%.3f rec=%.3f",
             fold_idx + 1,
             len(folds),
-            subject,
+            held_out_subject,
             xgb_rec["precision"],
             xgb_rec["recall"],
             cb_rec["precision"],
@@ -389,6 +389,10 @@ def _run_loso(loader: SubjectWiseDataLoader) -> dict[str, Any]:
 
     aggregated: dict[str, Any] = {}
     for name in MODEL_NAMES:
+        if len(pooled[name]["y_true"]) == 0:
+            log.warning("All folds skipped for %s — no metrics to compute.", name)
+            continue
+
         y_true_all = np.array(pooled[name]["y_true"])
         y_proba_all = np.array(pooled[name]["y_proba"])
         records = pooled[name]["fold_records"]
