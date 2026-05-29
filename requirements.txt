@@ -20,6 +20,9 @@ scikit-learn>=1.3
 # Optional: progress bars when iterating over EDF files
 tqdm>=4.66
 
+# Testing
+pytest>=8.0
+
 # Optional: gradient boosting (used in train_baselines, ablation_study, tune_hyperparams)
 xgboost>=1.7
 
