@@ -1,5 +1,4 @@
 import numpy as np
-import pytest
 
 from smooth_labels import smooth_session
 
@@ -16,19 +15,21 @@ def test_run_kmeans_orders_clusters_by_sdnn_descending():
     # Cluster B: mid SDNN (transitional)
     # Cluster C: low SDNN (drowsy)
     np.random.seed(42)
-    X = np.vstack([
-        np.random.randn(10, 2) + np.array([5.0, 3.0]),  # high SDNN at index 1
-        np.random.randn(10, 2) + np.array([0.0, 1.0]),  # mid SDNN
-        np.random.randn(10, 2) + np.array([-5.0, -3.0]),  # low SDNN
-    ])
-    
+    X = np.vstack(
+        [
+            np.random.randn(10, 2) + np.array([5.0, 3.0]),  # high SDNN at index 1
+            np.random.randn(10, 2) + np.array([0.0, 1.0]),  # mid SDNN
+            np.random.randn(10, 2) + np.array([-5.0, -3.0]),  # low SDNN
+        ]
+    )
+
     labels, centroids, _ = run_kmeans(X, n_clusters=3, sdnn_idx=1, random_state=42)
-    
+
     # Extract the cluster assignments for each data point
     # Points from the first cluster (high SDNN) should map to label 0 (alert)
     first_cluster_labels = labels[:10]
     assert np.all(first_cluster_labels == 0), "High SDNN cluster should be label 0 (alert)"
-    
+
     # Last cluster (low SDNN) should map to label 2 (drowsy)
     last_cluster_labels = labels[20:]
     assert np.all(last_cluster_labels == 2), "Low SDNN cluster should be label 2 (drowsy)"
@@ -43,9 +44,9 @@ def test_run_kmeans_produces_valid_label_range():
 
     np.random.seed(42)
     X = np.random.randn(30, 2)
-    
+
     labels, _, _ = run_kmeans(X, n_clusters=3, sdnn_idx=0, random_state=42)
-    
+
     assert np.all((labels >= 0) & (labels <= 2)), "Labels should be in range [0, 1, 2]"
     assert set(labels) == {0, 1, 2}, "All three labels should be present"
 

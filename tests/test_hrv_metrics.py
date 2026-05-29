@@ -1,8 +1,7 @@
 import numpy as np
-import pytest
 
 from config import ECG_SAMPLE_RATE
-from hrv_metrics import compute_window_hrv, HRVFeatures
+from hrv_metrics import HRVFeatures, compute_window_hrv
 
 
 def test_hrv_features_dataclass_has_expected_fields():

@@ -475,8 +475,10 @@ def run(
     df.to_csv(HRV_WINDOWS_PSEUDO_CSV, index=False)
     log.info("Pseudo-labeled CSV saved -> %s  (%d rows)", HRV_WINDOWS_PSEUDO_CSV, len(df))
 
-    # Set matplotlib backend before generating figures (deferred to avoid side effects during import)
+    # Set matplotlib backend before generating figures
+    # (deferred to avoid side effects during import)
     import matplotlib
+
     matplotlib.use("Agg")
 
     # Figures
