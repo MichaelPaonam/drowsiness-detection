@@ -19,7 +19,7 @@
 
 ## Project Structure
 
-```
+```text
 drowsiness-detection/
 ├── data/
 │   ├── raw/                      # Raw dataset directories
@@ -260,7 +260,7 @@ Standardize HRV features relative to each subject's own distribution, ensuring c
 
 **Normalization Method:**
 For each subject and each HRV feature:
-```
+```text
 z_norm = (x - subject_mean) / subject_std
 ```
 
@@ -370,7 +370,7 @@ test_subjects = split_utils.get_test_subjects()
 
 ### End-to-End Processing Flow
 
-```
+```text
 1. Raw EDF Files (data/raw/)
    ↓ extract_ecg.py
 2. ECG CSV (data/preprocessed/ecg_csv/)
@@ -542,8 +542,7 @@ After running the pipeline, inspect outputs:
 head -20 outputs/hrv_windows_final.csv
 
 # Check class distribution
-pandas -c "outputs/hrv_windows_final.csv" \
-       "df['pseudo_label_smoothed'].value_counts()"
+python -c "import pandas as pd; df = pd.read_csv('outputs/hrv_windows_final.csv'); print(df['pseudo_label_smoothed'].value_counts())"
 
 # View cluster visualizations
 # (Open PNG files in outputs/pseudo_kss/)
