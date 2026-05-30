@@ -27,7 +27,7 @@ import argparse
 import logging
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import matplotlib
 
@@ -157,9 +157,9 @@ def compute_metrics(
     cm = confusion_matrix(y_true, y_pred, labels=[0, 1])
 
     return {
-        "precision": float(precision_score(y_true, y_pred, zero_division=0)),
-        "recall": float(recall_score(y_true, y_pred, zero_division=0)),
-        "f1": float(f1_score(y_true, y_pred, zero_division=0)),
+        "precision": float(precision_score(y_true, y_pred, zero_division="warn")),
+        "recall": float(recall_score(y_true, y_pred, zero_division="warn")),
+        "f1": float(f1_score(y_true, y_pred, zero_division="warn")),
         "roc_auc": roc_auc,
         "pr_auc": pr_auc,
         "confusion_matrix": cm,
@@ -211,7 +211,8 @@ def fit_and_scale(X_train: np.ndarray, *arrays: np.ndarray) -> tuple[np.ndarray,
     """
     scaler = StandardScaler()
     result: list[np.ndarray] = [scaler.fit_transform(X_train)]
-    result.extend(scaler.transform(a) for a in arrays)
+    for array in arrays:
+        result.append(cast(np.ndarray, scaler.transform(array)))
     return tuple(result)
 
 
@@ -344,7 +345,7 @@ def _run_loso(loader: SubjectWiseDataLoader) -> dict[str, Any]:
     feature_cols = loader.feature_cols
     target_col = loader.target_col
 
-    pooled: dict[str, dict[str, list]] = {
+    pooled: dict[str, dict[str, list[Any]]] = {
         name: {"y_true": [], "y_proba": [], "fold_records": []} for name in MODEL_NAMES
     }
     models_last: dict[str, Any] = {}
@@ -514,8 +515,8 @@ def plot_pr_curves(
     ax.set_title("Precision-Recall Curves", fontweight="bold")
     ax.legend(fontsize=9)
     ax.grid(True, alpha=0.3)
-    ax.set_xlim([0.0, 1.0])
-    ax.set_ylim([0.0, 1.05])
+    ax.set_xlim((0.0, 1.0))
+    ax.set_ylim((0.0, 1.05))
     fig.tight_layout()
 
     out = PLOTS_DIR / f"fig_pr_curves{suffix}.png"
