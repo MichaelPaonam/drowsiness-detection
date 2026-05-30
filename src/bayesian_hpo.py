@@ -140,14 +140,12 @@ class XGBoostObjective:
         )
         model.fit(X_train, y_train, verbose=0)
 
-        # Evaluate on val and test
+        # Evaluate on val
         y_val_pred = model.predict(X_val)
-        y_test_pred = model.predict(X_test)
 
         f1_val = f1_score(y_val, y_val_pred, zero_division=0)
-        f1_test = f1_score(y_test, y_test_pred, zero_division=0)
 
-        return [f1_val, f1_test]
+        return [f1_val]
 
     def _eval_loso(self, params: dict[str, Any]) -> list[float]:
         """Evaluate using Leave-One-Subject-Out cross-validation."""
@@ -275,14 +273,12 @@ class CatBoostObjective:
         )
         model.fit(X_train, y_train)
 
-        # Evaluate on val and test
+        # Evaluate on val
         y_val_pred = model.predict(X_val)
-        y_test_pred = model.predict(X_test)
 
         f1_val = f1_score(y_val, y_val_pred, zero_division=0)
-        f1_test = f1_score(y_test, y_test_pred, zero_division=0)
 
-        return [f1_val, f1_test]
+        return [f1_val]
 
     def _eval_loso(self, params: dict[str, Any]) -> list[float]:
         """Evaluate using Leave-One-Subject-Out cross-validation."""
