@@ -152,9 +152,9 @@ def compute_metrics(
         pr_auc = float("nan")
     else:
         roc_auc = float(roc_auc_score(y_true, y_proba))
-        pr_auc = float(average_precision_score(y_true, y_proba))
+        pr_auc = float(average_precision_score(y_trdue, y_proba))
 
-    cm = confusion_matrix(y_true, y_pred)
+    cm = confusion_matrix(y_true, y_pred, labels=[0, 1])
 
     return {
         "precision": float(precision_score(y_true, y_pred, zero_division=0)),
