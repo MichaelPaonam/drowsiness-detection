@@ -37,6 +37,7 @@ import argparse
 import logging
 import sys
 from pathlib import Path
+from typing import cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -82,6 +83,8 @@ def _order_clusters_by_sdnn(centroids: np.ndarray, sdnn_col_idx: int) -> np.ndar
     indices 0=alert, 1=transitional, 2=drowsy, sorted by SDNN descending
     (higher SDNN = more alert).
     """
+    if centroids is None:
+        raise ValueError("centroids cannot be None")
     sdnn_vals = centroids[:, sdnn_col_idx]
     # argsort ascending → last element has highest SDNN (most alert)
     rank = np.argsort(sdnn_vals)[::-1]  # [most-alert-idx, mid-idx, drowsy-idx]
@@ -105,7 +108,7 @@ def run_kmeans(
     random_state: int = 42,
 ) -> tuple[np.ndarray, np.ndarray, float]:
     """Fit KMeans; return (ordered_labels, centroids_in_scaled_space, silhouette)."""
-    km = KMeans(n_clusters=n_clusters, random_state=random_state, n_init=20)
+    km = KMeans(n_clusters=n_clusters, random_state=random_state, n_init="auto")
     raw_labels = km.fit_predict(X_scaled)
     perm = _order_clusters_by_sdnn(km.cluster_centers_, sdnn_idx)
     ordered = perm[raw_labels]
@@ -134,7 +137,7 @@ def run_gmm(
     )
     gmm.fit(X_scaled)
     raw_labels = gmm.predict(X_scaled)
-    perm = _order_clusters_by_sdnn(gmm.means_, sdnn_idx)
+    perm = _order_clusters_by_sdnn(np.asarray(gmm.means_, dtype=np.float64), sdnn_idx)
     ordered = perm[raw_labels]
     sil = float(silhouette_score(X_scaled, raw_labels))
     log.info(
@@ -142,7 +145,7 @@ def run_gmm(
         sil,
         dict(zip(*np.unique(ordered, return_counts=True))),
     )
-    return ordered, gmm.means_, sil
+    return ordered, np.asarray(gmm.means_, dtype=np.float64), sil
 
 
 # ── DROZY ground-truth alignment ──────────────────────────────────────────────
@@ -173,7 +176,7 @@ def validate_against_drozy(df: pd.DataFrame, method: str) -> None:
     usable = kss_df[~kss_df["excluded"]].copy()
 
     drozy_mask = df["subject_id"].str.startswith("drozy_")
-    drozy_df = df[drozy_mask].copy()
+    drozy_df = cast(pd.DataFrame, df.loc[drozy_mask]).copy()
     if drozy_df.empty:
         log.info("No DROZY windows found — skipping ground-truth validation.")
         return
@@ -184,14 +187,17 @@ def validate_against_drozy(df: pd.DataFrame, method: str) -> None:
         if subj_int is None:
             return np.nan
         trial = int(row["trial_id"])
-        match = usable[(usable["subject_id"] == subj_int) & (usable["test_id"] == trial)]
-        if match.empty:
+        match = cast(
+            pd.DataFrame,
+            usable.loc[(usable["subject_id"] == subj_int) & (usable["test_id"] == trial)],
+        )
+        if len(match) == 0:
             return np.nan
         return int(match["label"].iloc[0])
 
     drozy_df["gt_label"] = drozy_df.apply(lookup_label, axis=1)
-    valid = drozy_df.dropna(subset=["gt_label"])
-    if valid.empty:
+    valid = cast(pd.DataFrame, drozy_df.loc[drozy_df["gt_label"].notna()])
+    if len(valid) == 0:
         log.warning("Could not match any DROZY windows to ground-truth labels.")
         return
 
@@ -274,10 +280,10 @@ def fig_cluster_distribution(df: pd.DataFrame) -> None:
         for ds, grp in df.groupby("dataset"):
             counts = grp[col].value_counts().sort_index()
             ax.bar(
-                [x + (0.2 if ds == "ddd" else -0.2) for x in counts.index],
+                [x + (0.2 if str(ds) == "ddd" else -0.2) for x in counts.index],
                 counts.values,
                 width=0.35,
-                label=ds.upper(),
+                label=str(ds).upper(),
                 alpha=0.8,
             )
         ax.set_xticks([2, 5, 8])
@@ -364,7 +370,7 @@ def fig_silhouette(
         sil_vals = silhouette_samples(X_scaled, labels)
         y_lower = 10
         for ci in range(n_clusters):
-            ci_sil = np.sort(sil_vals[labels == ci])
+            ci_sil = np.sort(np.asarray(sil_vals[labels == ci], dtype=np.float64))
             size = len(ci_sil)
             y_upper = y_lower + size
             ax.fill_betweenx(
@@ -458,7 +464,7 @@ def run(
 
     print("\n=== Pseudo-KSS Distribution by Dataset ===")
     for ds, grp in df.groupby("dataset"):
-        print(f"  {ds.upper()}:")
+        print(f"  {str(ds).upper()}:")
         vc = grp["pseudo_kss"].value_counts().sort_index()
         for kss_val, cnt in vc.items():
             pct = cnt / len(grp) * 100
