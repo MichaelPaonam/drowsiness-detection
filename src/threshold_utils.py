@@ -19,11 +19,15 @@ def find_threshold_for_fpr(y_true: np.ndarray, y_proba: np.ndarray, target_fpr: 
     if len(y_true) == 0 or len(y_proba) == 0:
         raise ValueError("Input arrays cannot be empty")
     if len(y_true) != len(y_proba):
-        raise ValueError(f"Array length mismatch: y_true has {len(y_true)} elements, y_proba has {len(y_proba)}")
+        raise ValueError(
+            f"Array length mismatch: y_true has {len(y_true)} elements, y_proba has {len(y_proba)}"
+        )
     if not 0.0 <= target_fpr <= 1.0:
         raise ValueError(f"target_fpr must be in [0.0, 1.0], got {target_fpr}")
     if len(np.unique(y_true)) < 2:
-        raise ValueError("y_true must contain at least two distinct classes for ROC curve computation")   
+        raise ValueError(
+            "y_true must contain at least two distinct classes for ROC curve computation"
+        )
 
     fpr, _, thresholds = roc_curve(y_true, y_proba)
 
