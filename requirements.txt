@@ -9,7 +9,7 @@ seaborn>=0.13
 pyedflib>=0.1.28
 
 # Environment variable loading
-python-dotenv>=1.0
+python-dotenv>=1.2.2
 
 # HRV / ECG processing
 neurokit2>=0.2.7
