@@ -1,0 +1,37 @@
+name: Type Check
+
+on:
+  pull_request:
+  push:
+    branches:
+    - main
+
+permissions:
+  contents: read
+
+jobs:
+  pyright:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+       python -m pip install --upgrade pip
+       pip install -r requirements.txt
+       pip install pytest pyright
+
+    - name: Run Pyright
+      run: pyright
+      continue-on-error: false
