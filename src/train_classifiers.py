@@ -44,6 +44,7 @@ from sklearn.metrics import (
     recall_score,
     roc_auc_score,
     roc_curve,
+    confusion_matrix,
 )
 from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
@@ -133,7 +134,7 @@ def compute_metrics(
     y_true: np.ndarray,
     y_proba: np.ndarray,
     threshold: float = 0.5,
-) -> dict[str, float]:
+) -> dict[str, Any]:
     """
     Compute standard binary classification metrics at the given threshold.
 
@@ -143,7 +144,7 @@ def compute_metrics(
         threshold: Decision threshold used to binarise probabilities.
 
     Returns:
-        Dictionary with keys: precision, recall, f1, roc_auc, pr_auc.
+        Dictionary with keys: precision, recall, f1, roc_auc, pr_auc, confusion_matrix.
     """
     y_pred = (y_proba >= threshold).astype(int)
     if len(np.unique(y_true)) < 2:
@@ -152,12 +153,16 @@ def compute_metrics(
     else:
         roc_auc = float(roc_auc_score(y_true, y_proba))
         pr_auc = float(average_precision_score(y_true, y_proba))
+    
+    cm = confusion_matrix(y_true, y_pred)
+    
     return {
         "precision": float(precision_score(y_true, y_pred, zero_division=0)),
         "recall": float(recall_score(y_true, y_pred, zero_division=0)),
         "f1": float(f1_score(y_true, y_pred, zero_division=0)),
         "roc_auc": roc_auc,
         "pr_auc": pr_auc,
+        "confusion_matrix": cm,
     }
 
 
@@ -366,6 +371,13 @@ def _run_loso(loader: SubjectWiseDataLoader) -> dict[str, Any]:
             models_last[name] = result[name]["model"]
 
             metrics = compute_metrics(y_test, y_proba)
+            # Flatten confusion matrix for CSV compatibility
+            cm = metrics.pop("confusion_matrix")
+            metrics["tn"] = int(cm[0, 0])
+            metrics["fp"] = int(cm[0, 1])
+            metrics["fn"] = int(cm[1, 0])
+            metrics["tp"] = int(cm[1, 1])
+
             pooled[name]["y_true"].extend(y_test.tolist())
             pooled[name]["y_proba"].extend(y_proba.tolist())
             pooled[name]["fold_records"].append(
@@ -572,6 +584,10 @@ _SEP = "=" * 80
 _DIV = "-" * 80
 
 
+def _format_cm(cm: np.ndarray) -> str:
+    return f"[[{cm[0,0]:4d}, {cm[0,1]:4d}], [{cm[1,0]:4d}, {cm[1,1]:4d}]]"
+
+
 def _format_comparison_fixed(results: dict[str, Any]) -> str:
     """
     Format a fixed-split comparison summary as a plain-text table.
@@ -582,7 +598,7 @@ def _format_comparison_fixed(results: dict[str, Any]) -> str:
     Returns:
         Formatted multi-line string.
     """
-    header = "  %-10s %-5s %5s %6s %6s %6s %8s %7s" % (
+    header = "  %-10s %-5s %5s %6s %6s %6s %8s %7s %20s" % (
         "Model",
         "Split",
         "N",
@@ -591,6 +607,7 @@ def _format_comparison_fixed(results: dict[str, Any]) -> str:
         "F1",
         "ROC-AUC",
         "PR-AUC",
+        "CM",
     )
     lines = [_SEP, "CLASSIFIER COMPARISON (FIXED SPLIT)", _SEP, "", header, _DIV]
 
@@ -598,7 +615,7 @@ def _format_comparison_fixed(results: dict[str, Any]) -> str:
         for split_name in ("val", "test"):
             m = results[name][split_name]
             lines.append(
-                "  %-10s %-5s %5d %6.4f %6.4f %6.4f %8.4f %7.4f"
+                "  %-10s %-5s %5d %6.4f %6.4f %6.4f %8.4f %7.4f   %s"
                 % (
                     name,
                     split_name,
@@ -608,6 +625,7 @@ def _format_comparison_fixed(results: dict[str, Any]) -> str:
                     m["f1"],
                     m["roc_auc"],
                     m["pr_auc"],
+                    _format_cm(m["confusion_matrix"]),
                 )
             )
 
@@ -625,7 +643,7 @@ def _format_comparison_loso(results: dict[str, Any]) -> str:
     Returns:
         Formatted multi-line string.
     """
-    header = "  %-10s %8s %7s %8s %9s %8s %7s %7s" % (
+    header = "  %-10s %8s %7s %8s %9s %8s %7s %7s %20s" % (
         "Model",
         "Windows",
         "PR-AUC",
@@ -634,6 +652,7 @@ def _format_comparison_loso(results: dict[str, Any]) -> str:
         "Rec@opt",
         "F1@opt",
         "Thresh",
+        "CM",
     )
     lines = [_SEP, "CLASSIFIER COMPARISON (LOSO-CV)", _SEP, "", header, _DIV]
 
@@ -642,7 +661,7 @@ def _format_comparison_loso(results: dict[str, Any]) -> str:
         m = r["overall"]
         n = len(r["y_true"])
         lines.append(
-            "  %-10s %8d %7.4f %8.4f %9.4f %8.4f %7.4f %7.4f"
+            "  %-10s %8d %7.4f %8.4f %9.4f %8.4f %7.4f %7.4f   %s"
             % (
                 name,
                 n,
@@ -652,6 +671,7 @@ def _format_comparison_loso(results: dict[str, Any]) -> str:
                 m["recall"],
                 m["f1"],
                 r["opt_threshold"],
+                _format_cm(m["confusion_matrix"]),
             )
         )
 
@@ -736,6 +756,10 @@ def run_fixed_split() -> None:
                     "f1": m["f1"],
                     "roc_auc": m["roc_auc"],
                     "pr_auc": m["pr_auc"],
+                    "tn": int(m["confusion_matrix"][0, 0]),
+                    "fp": int(m["confusion_matrix"][0, 1]),
+                    "fn": int(m["confusion_matrix"][1, 0]),
+                    "tp": int(m["confusion_matrix"][1, 1]),
                 }
             )
 
