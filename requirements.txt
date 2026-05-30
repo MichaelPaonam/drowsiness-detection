@@ -18,7 +18,7 @@ neurokit2>=0.2.13
 scikit-learn>=1.8.0
 
 # Gradient boosting classifiers
-xgboost>=1.7
+xgboost>=3.2.0
 catboost>=1.2
 
 # Hyperparameter optimization
