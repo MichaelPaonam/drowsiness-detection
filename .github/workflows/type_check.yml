@@ -34,4 +34,4 @@ jobs:
 
     - name: Run Pyright
       run: pyright
-      continue-on-error: true
+      continue-on-error: false
