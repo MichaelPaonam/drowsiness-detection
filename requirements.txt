@@ -6,7 +6,7 @@ matplotlib>=3.7
 seaborn>=0.13
 
 # EDF file reading
-pyedflib>=0.1.28
+pyedflib>=0.1.42
 
 # Environment variable loading
 python-dotenv>=1.2.2
