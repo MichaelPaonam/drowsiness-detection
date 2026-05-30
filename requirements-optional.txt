@@ -1,0 +1,2 @@
+# Optional dependencies for advanced features
+# Install with: pip install -r requirements-optional.txt
