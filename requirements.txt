@@ -12,7 +12,7 @@ pyedflib>=0.1.42
 python-dotenv>=1.2.2
 
 # HRV / ECG processing
-neurokit2>=0.2.7
+neurokit2>=0.2.13
 
 # Machine learning (for downstream logistic regression and metrics)
 scikit-learn>=1.8.0
