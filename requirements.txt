@@ -2,7 +2,7 @@
 numpy>=2.4.6
 pandas>=2.0
 scipy>=1.11
-matplotlib>=3.7
+matplotlib>=3.10.9
 seaborn>=0.13
 
 # EDF file reading
