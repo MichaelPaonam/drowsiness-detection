@@ -1,8 +1,2 @@
 # Optional dependencies for advanced features
 # Install with: pip install -r requirements-optional.txt
-
-# Optional: gradient boosting (used in train_baselines, ablation_study, tune_hyperparams)
-xgboost>=1.7
-
-# CatBoost gradient boosting (used in train_pseudo_model)
-catboost>=1.2
