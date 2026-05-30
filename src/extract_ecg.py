@@ -25,7 +25,7 @@ from typing import NamedTuple
 
 import numpy as np
 import pandas as pd
-import pyedflib
+from pyedflib.edfreader import EdfReader
 
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -154,7 +154,7 @@ def extract_and_save(info: EdfInfo, out_dir: Path) -> bool:
         return True
 
     try:
-        with pyedflib.EdfReader(str(info.path)) as edf:
+        with EdfReader(str(info.path)) as edf:
             labels = [label.strip() for label in edf.getSignalLabels()]
             ecg_idx = find_ecg_channel_index(labels)
 

@@ -101,7 +101,7 @@ class XGBoostObjective:
 
             mean_f1 = np.mean(f1_scores)
             log.info(f"Trial {trial.number}: F1={mean_f1:.4f} (std={np.std(f1_scores):.4f})")
-            return mean_f1
+            return float(mean_f1)
         except Exception as e:
             log.warning(f"Trial {trial.number} failed: {e}")
             return 0.0
@@ -142,7 +142,7 @@ class XGBoostObjective:
         # Evaluate on val
         y_val_pred = model.predict(X_val)
 
-        f1_val = f1_score(y_val, y_val_pred, zero_division=0)
+        f1_val = f1_score(y_val, y_val_pred, zero_division="warn")
 
         return [f1_val]
 
@@ -161,7 +161,7 @@ class XGBoostObjective:
             y_test = test_df["pseudo_label_smoothed"].values
 
             # Skip if test set has only one class
-            if len(np.unique(y_test)) < 2:
+            if len(np.unique(y_test.astype(int))) < 2:
                 log.debug(f"Fold {fold_idx}: skipping (only one class in test set)")
                 continue
 
@@ -171,7 +171,7 @@ class XGBoostObjective:
             X_test = scaler.transform(X_test)
 
             # Compute scale_pos_weight
-            n_pos = int(y_train.sum())
+            n_pos = int(np.asarray(y_train == 1, dtype=bool).sum())
             if n_pos == 0:
                 continue
             scale_pos_weight = (len(y_train) - n_pos) / n_pos
@@ -187,7 +187,7 @@ class XGBoostObjective:
 
             # Evaluate
             y_test_pred = model.predict(X_test)
-            f1 = f1_score(y_test, y_test_pred, zero_division=0)
+            f1 = f1_score(y_test, y_test_pred, zero_division="warn")
             f1_scores.append(f1)
 
         return f1_scores if f1_scores else [0.0]
@@ -239,7 +239,7 @@ class CatBoostObjective:
 
             mean_f1 = np.mean(f1_scores)
             log.info(f"Trial {trial.number}: F1={mean_f1:.4f} (std={np.std(f1_scores):.4f})")
-            return mean_f1
+            return float(mean_f1)
         except Exception as e:
             log.warning(f"Trial {trial.number} failed: {e}")
             return 0.0
@@ -274,7 +274,7 @@ class CatBoostObjective:
         # Evaluate on val
         y_val_pred = model.predict(X_val)
 
-        f1_val = f1_score(y_val, y_val_pred, zero_division=0)
+        f1_val = f1_score(y_val, y_val_pred, zero_division="warn")
 
         return [f1_val]
 
@@ -293,7 +293,7 @@ class CatBoostObjective:
             y_test = test_df["pseudo_label_smoothed"].values
 
             # Skip if test set has only one class
-            if len(np.unique(y_test)) < 2:
+            if len(np.unique(y_test.astype(int))) < 2:
                 log.debug(f"Fold {fold_idx}: skipping (only one class in test set)")
                 continue
 
@@ -313,7 +313,7 @@ class CatBoostObjective:
 
             # Evaluate
             y_test_pred = model.predict(X_test)
-            f1 = f1_score(y_test, y_test_pred, zero_division=0)
+            f1 = f1_score(y_test, y_test_pred, zero_division="warn")
             f1_scores.append(f1)
 
         return f1_scores if f1_scores else [0.0]

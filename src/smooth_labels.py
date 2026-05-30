@@ -91,7 +91,7 @@ def fig_temporal_smoothing(df: pd.DataFrame, n_examples: int = 4) -> None:
 
     # Pick subjects with the most windows for clarity
     session_counts = df.groupby(["subject_id", "trial_id"]).size()
-    top_sessions = session_counts.nlargest(n_examples).index.tolist()
+    top_sessions = list(session_counts.nlargest(n_examples).index)
 
     fig, axes = plt.subplots(n_examples, 1, figsize=(12, 3 * n_examples), sharex=False)
     if n_examples == 1:
@@ -99,8 +99,8 @@ def fig_temporal_smoothing(df: pd.DataFrame, n_examples: int = 4) -> None:
 
     for ax, (subj, trial) in zip(axes, top_sessions):
         sub = df[(df["subject_id"] == subj) & (df["trial_id"] == trial)].copy()
-        sub = sub.sort_values("window_index")
-        x = sub["window_start_sec"].values / 60  # convert to minutes
+        sub = sub.sort_values(by="window_index")
+        x = sub["window_start_sec"].values / 60.0  # convert to minutes
 
         ax.plot(
             x,
@@ -174,7 +174,7 @@ def run(
     changed_total = 0
     for (subj, trial), grp in df.groupby(["subject_id", "trial_id"]):
         idx = grp.index
-        raw = grp[src_col].values.copy()
+        raw = np.asarray(grp[src_col].values, dtype=np.float64)
         smoothed = smooth_session(raw, kernel_size, enforce_monotonic)
         df.loc[idx, "pseudo_kss_smoothed"] = smoothed
         changed = int((smoothed != raw).sum())
@@ -192,8 +192,8 @@ def run(
     print(f"  Windows changed   : {changed_total}  ({pct:.1f}%)")
 
     for ds, grp in df.groupby("dataset"):
-        ds_changed = int((grp["pseudo_kss_smoothed"].values != grp[src_col].values).sum())
-        print(f"  {ds.upper():6s} changed: {ds_changed}/{len(grp)}")
+        ds_changed = int(((grp["pseudo_kss_smoothed"].values.astype(float) != grp[src_col].values.astype(float)).astype(int)).sum())
+        print(f"  {str(ds).upper():6s} changed: {ds_changed}/{len(grp)}")
 
     label_dist = df["pseudo_label_smoothed"].value_counts().sort_index()
     print("\n  Smoothed label distribution:")

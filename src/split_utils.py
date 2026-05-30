@@ -112,20 +112,20 @@ def split_features_df(features_df: pd.DataFrame) -> dict[str, pd.DataFrame]:
       - Each split is non-empty
     """
     df = assign_split_column(features_df)
-    usable = df[df["split"].notna()].copy()
+    usable: pd.DataFrame = df[df["split"].notna()].copy()
 
     _validate_split_integrity(usable)
 
     splits = {}
     for split_name in ("train", "val", "test"):
-        subset = usable[usable["split"] == split_name].copy()
+        subset: pd.DataFrame = usable[usable["split"] == split_name].copy()
         splits[split_name] = subset
         log.info(
             "Split '%s': %d rows, %d subjects, label dist: %s",
             split_name,
             len(subset),
-            subset["subject_id"].nunique(),
-            subset["label"].value_counts().to_dict(),
+            int(subset["subject_id"].nunique()),
+            dict(subset["label"].value_counts()),
         )
 
     return splits
@@ -153,8 +153,8 @@ def get_xy(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
     missing = [c for c in HRV_FEATURE_COLS if c not in df.columns]
     if missing:
         raise ValueError(f"Feature columns missing from DataFrame: {missing}")
-    X = df[HRV_FEATURE_COLS].copy()
-    y = df["label"].copy()
+    X: pd.DataFrame = df[HRV_FEATURE_COLS].copy()
+    y: pd.Series = df["label"].copy()
     return X, y
 
 
@@ -168,13 +168,13 @@ def _validate_split_integrity(df: pd.DataFrame) -> None:
     # Check no subject in multiple splits
     subject_splits = df.groupby("subject_id")["split"].nunique()
     overlap = subject_splits[subject_splits > 1]
-    if not overlap.empty:
+    if len(overlap) > 0:
         raise ValueError(
-            f"DATA LEAKAGE: subjects appear in multiple splits: {overlap.index.tolist()}"
+            f"DATA LEAKAGE: subjects appear in multiple splits: {list(overlap.index)}"
         )
 
     # Check both classes in train
-    train = df[df["split"] == "train"]
+    train: pd.DataFrame = df[df["split"] == "train"]
     if len(train["label"].unique()) < 2:
         raise ValueError(
             "Train split contains only one class. Check SPLIT_MAP and label distribution."
