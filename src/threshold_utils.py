@@ -4,8 +4,9 @@ from sklearn.metrics import roc_curve
 
 def find_threshold_for_fpr(y_true: np.ndarray, y_proba: np.ndarray, target_fpr: float) -> float:
     """
-    Find the decision threshold that results in a False Positive Rate (FPR)
-    closest to, but not exceeding, the target_fpr.
+    +    Find the decision threshold that results in the highest False Positive Rate (FPR)
+    +    that does not exceed the target_fpr, thereby maximizing sensitivity while
+    +    respecting the FPR constraint.
 
     Args:
         y_true: Ground-truth binary labels.
