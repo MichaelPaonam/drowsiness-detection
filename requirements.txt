@@ -21,5 +21,8 @@ scikit-learn>=1.3
 xgboost>=1.7
 catboost>=1.2
 
+# Hyperparameter optimization
+optuna>=3.0
+
 # Optional: progress bars when iterating over EDF files
 tqdm>=4.66
