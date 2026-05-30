@@ -117,7 +117,6 @@ class XGBoostObjective:
         X_val = val_df[self.loader.feature_cols].values
         y_val = val_df["pseudo_label_smoothed"].values
         X_test = test_df[self.loader.feature_cols].values
-        y_test = test_df["pseudo_label_smoothed"].values
 
         # Scale
         scaler = StandardScaler()
@@ -256,7 +255,6 @@ class CatBoostObjective:
         X_val = val_df[self.loader.feature_cols].values
         y_val = val_df["pseudo_label_smoothed"].values
         X_test = test_df[self.loader.feature_cols].values
-        y_test = test_df["pseudo_label_smoothed"].values
 
         # Scale
         scaler = StandardScaler()
