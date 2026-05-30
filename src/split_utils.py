@@ -7,6 +7,7 @@ Uses a fixed, documented split map for reproducibility.
 
 import logging
 from pathlib import Path
+from typing import cast
 
 import pandas as pd
 
@@ -112,20 +113,20 @@ def split_features_df(features_df: pd.DataFrame) -> dict[str, pd.DataFrame]:
       - Each split is non-empty
     """
     df = assign_split_column(features_df)
-    usable = df[df["split"].notna()].copy()
+    usable = cast(pd.DataFrame, df.loc[df["split"].notna()]).copy()
 
     _validate_split_integrity(usable)
 
     splits = {}
     for split_name in ("train", "val", "test"):
-        subset = usable[usable["split"] == split_name].copy()
+        subset = cast(pd.DataFrame, usable.loc[usable["split"] == split_name]).copy()
         splits[split_name] = subset
         log.info(
             "Split '%s': %d rows, %d subjects, label dist: %s",
             split_name,
             len(subset),
-            subset["subject_id"].nunique(),
-            subset["label"].value_counts().to_dict(),
+            int(subset["subject_id"].nunique()),
+            dict(subset["label"].value_counts()),
         )
 
     return splits
@@ -153,8 +154,8 @@ def get_xy(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
     missing = [c for c in HRV_FEATURE_COLS if c not in df.columns]
     if missing:
         raise ValueError(f"Feature columns missing from DataFrame: {missing}")
-    X = df[HRV_FEATURE_COLS].copy()
-    y = df["label"].copy()
+    X = cast(pd.DataFrame, df.loc[:, HRV_FEATURE_COLS]).copy()
+    y = cast(pd.Series, df.loc[:, "label"]).copy()
     return X, y
 
 
@@ -166,15 +167,13 @@ def get_xy(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
 def _validate_split_integrity(df: pd.DataFrame) -> None:
     """Raise or warn on split integrity violations."""
     # Check no subject in multiple splits
-    subject_splits = df.groupby("subject_id")["split"].nunique()
-    overlap = subject_splits[subject_splits > 1]
-    if not overlap.empty:
-        raise ValueError(
-            f"DATA LEAKAGE: subjects appear in multiple splits: {overlap.index.tolist()}"
-        )
+    subject_splits = cast(pd.Series, df.groupby("subject_id")["split"].nunique())
+    overlap = cast(pd.Series, subject_splits.loc[subject_splits > 1])
+    if len(overlap) > 0:
+        raise ValueError(f"DATA LEAKAGE: subjects appear in multiple splits: {list(overlap.index)}")
 
     # Check both classes in train
-    train = df[df["split"] == "train"]
+    train = cast(pd.DataFrame, df.loc[df["split"] == "train"])
     if len(train["label"].unique()) < 2:
         raise ValueError(
             "Train split contains only one class. Check SPLIT_MAP and label distribution."
@@ -182,7 +181,7 @@ def _validate_split_integrity(df: pd.DataFrame) -> None:
 
     # Warn if val or test have only one class
     for split_name in ("val", "test"):
-        subset = df[df["split"] == split_name]
+        subset = cast(pd.DataFrame, df.loc[df["split"] == split_name])
         if len(subset) > 0 and len(subset["label"].unique()) < 2:
             log.warning(
                 "Split '%s' contains only one class. Precision/recall undefined on this split.",
