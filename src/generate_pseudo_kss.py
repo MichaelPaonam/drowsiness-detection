@@ -37,6 +37,7 @@ import argparse
 import logging
 import sys
 from pathlib import Path
+from typing import cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -175,7 +176,7 @@ def validate_against_drozy(df: pd.DataFrame, method: str) -> None:
     usable = kss_df[~kss_df["excluded"]].copy()
 
     drozy_mask = df["subject_id"].str.startswith("drozy_")
-    drozy_df = df[drozy_mask].copy()
+    drozy_df = cast(pd.DataFrame, df.loc[drozy_mask]).copy()
     if drozy_df.empty:
         log.info("No DROZY windows found — skipping ground-truth validation.")
         return
@@ -186,13 +187,16 @@ def validate_against_drozy(df: pd.DataFrame, method: str) -> None:
         if subj_int is None:
             return np.nan
         trial = int(row["trial_id"])
-        match: pd.DataFrame = usable[(usable["subject_id"] == subj_int) & (usable["test_id"] == trial)]
+        match = cast(
+            pd.DataFrame,
+            usable.loc[(usable["subject_id"] == subj_int) & (usable["test_id"] == trial)],
+        )
         if len(match) == 0:
             return np.nan
         return int(match["label"].iloc[0])
 
     drozy_df["gt_label"] = drozy_df.apply(lookup_label, axis=1)
-    valid: pd.DataFrame = drozy_df.dropna(subset=["gt_label"])
+    valid = cast(pd.DataFrame, drozy_df.loc[drozy_df["gt_label"].notna()])
     if len(valid) == 0:
         log.warning("Could not match any DROZY windows to ground-truth labels.")
         return

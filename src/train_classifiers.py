@@ -27,7 +27,7 @@ import argparse
 import logging
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import matplotlib
 
@@ -211,7 +211,8 @@ def fit_and_scale(X_train: np.ndarray, *arrays: np.ndarray) -> tuple[np.ndarray,
     """
     scaler = StandardScaler()
     result: list[np.ndarray] = [scaler.fit_transform(X_train)]
-    result.extend([scaler.transform(a) for a in arrays])
+    for array in arrays:
+        result.append(cast(np.ndarray, scaler.transform(array)))
     return tuple(result)
 
 
@@ -344,7 +345,7 @@ def _run_loso(loader: SubjectWiseDataLoader) -> dict[str, Any]:
     feature_cols = loader.feature_cols
     target_col = loader.target_col
 
-    pooled: dict[str, dict[str, list]] = {
+    pooled: dict[str, dict[str, list[Any]]] = {
         name: {"y_true": [], "y_proba": [], "fold_records": []} for name in MODEL_NAMES
     }
     models_last: dict[str, Any] = {}
