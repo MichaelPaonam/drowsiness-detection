@@ -84,9 +84,7 @@ class XGBoostObjective:
         params = {
             "n_estimators": trial.suggest_int("n_estimators", 50, 500),
             "max_depth": trial.suggest_int("max_depth", 3, 10),
-            "learning_rate": trial.suggest_float(
-                "learning_rate", 0.001, 0.3, log=True
-            ),
+            "learning_rate": trial.suggest_float("learning_rate", 0.001, 0.3, log=True),
             "subsample": trial.suggest_float("subsample", 0.5, 1.0),
             "colsample_bytree": trial.suggest_float("colsample_bytree", 0.5, 1.0),
             "min_child_weight": trial.suggest_int("min_child_weight", 1, 10),
@@ -102,10 +100,7 @@ class XGBoostObjective:
                 f1_scores = self._eval_fixed(params)
 
             mean_f1 = np.mean(f1_scores)
-            log.info(
-                f"Trial {trial.number}: F1={mean_f1:.4f} "
-                f"(std={np.std(f1_scores):.4f})"
-            )
+            log.info(f"Trial {trial.number}: F1={mean_f1:.4f} (std={np.std(f1_scores):.4f})")
             return mean_f1
         except Exception as e:
             log.warning(f"Trial {trial.number} failed: {e}")
@@ -233,14 +228,10 @@ class CatBoostObjective:
         params = {
             "iterations": trial.suggest_int("iterations", 50, 500),
             "depth": trial.suggest_int("depth", 3, 10),
-            "learning_rate": trial.suggest_float(
-                "learning_rate", 0.001, 0.3, log=True
-            ),
+            "learning_rate": trial.suggest_float("learning_rate", 0.001, 0.3, log=True),
             "subsample": trial.suggest_float("subsample", 0.5, 1.0),
             "l2_leaf_reg": trial.suggest_float("l2_leaf_reg", 1e-2, 10, log=True),
-            "leaf_estimation_iterations": trial.suggest_int(
-                "leaf_estimation_iterations", 1, 10
-            ),
+            "leaf_estimation_iterations": trial.suggest_int("leaf_estimation_iterations", 1, 10),
         }
 
         try:
@@ -250,10 +241,7 @@ class CatBoostObjective:
                 f1_scores = self._eval_fixed(params)
 
             mean_f1 = np.mean(f1_scores)
-            log.info(
-                f"Trial {trial.number}: F1={mean_f1:.4f} "
-                f"(std={np.std(f1_scores):.4f})"
-            )
+            log.info(f"Trial {trial.number}: F1={mean_f1:.4f} (std={np.std(f1_scores):.4f})")
             return mean_f1
         except Exception as e:
             log.warning(f"Trial {trial.number} failed: {e}")

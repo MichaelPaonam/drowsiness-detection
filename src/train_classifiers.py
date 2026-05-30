@@ -585,7 +585,7 @@ _DIV = "-" * 80
 
 
 def _format_cm(cm: np.ndarray) -> str:
-    return f"[[{cm[0,0]:4d}, {cm[0,1]:4d}], [{cm[1,0]:4d}, {cm[1,1]:4d}]]"
+    return f"[[{cm[0, 0]:4d}, {cm[0, 1]:4d}], [{cm[1, 0]:4d}, {cm[1, 1]:4d}]]"
 
 
 def _format_comparison_fixed(results: dict[str, Any]) -> str:
