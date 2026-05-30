@@ -16,9 +16,11 @@ jobs:
       matrix:
         python-version: ["3.12"]
 
-
     steps:
     - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+        
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v6
       with:
