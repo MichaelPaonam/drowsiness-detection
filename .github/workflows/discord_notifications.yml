@@ -117,6 +117,6 @@ jobs:
         uses: tsickert/discord-webhook@b217a69502f52803de774ded2b1ab7c282e99645
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
-          content: |
-            ${{ steps.message.outputs.msg }}
-            ${{ steps.message.outputs.url }}
+          embed-title: ${{ steps.message.outputs.msg }}
+          embed-url: ${{ steps.message.outputs.url }}
+          embed-color: "16711680"
