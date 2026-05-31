@@ -252,7 +252,85 @@ The pipeline, codebase, and documented findings provide a solid foundation for t
 
 ---
 
-## References
+## 9. Production Roadmap & Recommendations
+
+### 9.1 Production Readiness Assessment
+
+The current system is a research prototype with a well-defined scope. Understanding what works today and what is missing is the prerequisite for any honest deployment planning.
+
+**What works today:**
+
+- **Offline ECG classification** — the full pipeline from raw EDF files to per-window drowsiness predictions runs reliably end-to-end on DROZY and DDD recordings.
+- **Trained XGBoost model** — the saved model (`models/xgb_model.pkl`) with its associated scaler is portable and produces consistent predictions on held-out subjects (PR-AUC 0.958 under LOSO-CV).
+- **Inference CLI** — `src/inference.py` accepts a CSV of HRV features and returns binary predictions, providing a clean interface for downstream integration.
+
+**What is missing before production use:**
+
+- **Real-time streaming** — the pipeline is batch-only; it processes complete recordings and cannot operate on a live ECG stream.
+- **Validated ground truth** — pseudo-labels (κ = 0.15 against DROZY KSS) are insufficient for a safety-critical alert system; calibrated performance against expert ratings has not been established.
+- **Alerting and actuation** — there is no threshold logic, alert suppression, or mechanism to notify a driver or fleet operator.
+- **Edge deployment** — the model has not been profiled or optimized for embedded hardware with constrained compute and memory.
+
+---
+
+### 9.2 Required Enhancements
+
+**Ground truth labels.** The most fundamental gap is label quality. The UL-DD dataset collects periodic KSS ratings from subjects every 4 minutes during extended driving sessions — a labeling density that directly supports per-window supervised training without pseudo-labeling. Retraining with real KSS labels would allow the model's performance metrics to reflect actual drowsiness detection accuracy rather than pseudo-label consistency.
+
+**Real-time processing.** The current pipeline loads a complete EDF file, extracts all windows, and scores them in bulk. A production system must operate on a live ECG stream: receiving raw samples, maintaining a rolling buffer, extracting HRV features when a full window is available, and emitting a prediction — all within a hard latency budget. This requires a streaming architecture distinct from the current batch design.
+
+**Latency.** Current end-to-end inference latency is approximately 1 second per recording window when run on a standard laptop CPU. Real-time driver monitoring requires predictions within **500 ms per window** to allow timely alerts and avoid the system falling behind the stream. Profiling and optimization (model quantization, feature computation in C/C++, or hardware acceleration) will be necessary on edge targets.
+
+**Edge deployment.** A wearable or in-vehicle ECG system must run on embedded hardware alongside the ECG sensor — likely an ARM Cortex-M or similar microcontroller with kilobytes to a few megabytes of available RAM. The XGBoost model must be converted to a compact, fixed-point representation (e.g., via `micromlgen` or ONNX export with INT8 quantization) and validated for numerical equivalence with the Python reference implementation.
+
+**Alert system.** Raw per-window predictions must be post-processed before triggering alerts. A threshold-based alert should require a minimum number of consecutive drowsy windows (e.g., 3 out of 5) to fire, with configurable sensitivity. False-alarm rate and missed-detection rate should be tunable via a single sensitivity parameter so operators can adapt to different use-case risk tolerances.
+
+**User calibration.** The per-subject z-score normalization in the current pipeline requires the full recording to compute each subject's mean and standard deviation. A production system cannot wait for a complete session. An adaptive baseline mechanism — estimating subject-level statistics from the first 3–5 minutes of each session and updating them incrementally — is needed to enable early-session predictions.
+
+---
+
+### 9.3 Recommended Architecture
+
+A minimal viable production architecture follows this data flow:
+
+```
+Wearable ECG sensor
+    → Bluetooth / BLE
+    → Edge device (microcontroller or SBC)
+    → Bandpass filter + R-peak detection
+    → Rolling RR buffer → HRV feature extraction
+    → XGBoost inference (quantized model)
+    → Alert threshold logic
+    → Haptic / audio alert to driver
+```
+
+An optional telemetry layer can forward anonymized feature vectors and alert events to an API endpoint for fleet monitoring, over-the-air model updates, and population-level performance tracking. This layer should be opt-in and operate asynchronously so that connectivity loss does not impair local alerting.
+
+---
+
+### 9.4 Safety Considerations
+
+**False negative risk.** In a safety-critical application, missing real drowsiness is more dangerous than generating a false alarm. The alert threshold should be set conservatively (high recall over high precision) for initial deployments, with sensitivity adjustment guided by field data.
+
+**Not a replacement for existing safety systems.** ECG-based HRV monitoring captures one dimension of driver state. It should be deployed as a complementary layer alongside — not as a substitute for — lane departure warning, forward collision warning, and ADAS features that address the consequences of a drowsy driver rather than its cause.
+
+**Medical device classification.** Depending on jurisdiction and the specificity of claims made for the product, an ECG-based alerting system may trigger medical device regulations (FDA Class II in the United States, MDR in Europe). Regulatory classification should be assessed before any clinical or commercial deployment.
+
+---
+
+### 9.5 Prioritized Next Steps
+
+The following sequence balances dataset access time, engineering effort, and expected impact:
+
+1. **Acquire the UL-DD dataset and retrain with real KSS labels** — this single change most directly addresses the core limitation of pseudo-label quality and will give a reliable performance baseline.
+2. **Build a streaming inference pipeline** — wrap the existing feature extraction and scoring logic in a rolling-window consumer that operates on live RR interval data; validate latency against the 500 ms budget.
+3. **Add frequency-domain HRV features** — compute LF/HF ratio, LF power, and HF power using a Welch periodogram on each window; evaluate whether they improve LOSO-CV performance beyond the current time-domain feature set.
+4. **Edge deployment prototype** — export the retrained model to ONNX or a fixed-point C array, deploy to a Raspberry Pi or Arduino Nicla Sense ME, and verify functional equivalence and inference latency.
+5. **Multi-modal fusion pilot** — integrate a front-facing camera for PERCLOS (eye-closure ratio) estimation and combine ECG and vision predictions via a learned or rule-based fusion layer to reduce false-positive rate.
+
+---
+
+## 10. References
 
 1. Massoz, Q., Langohr, T., François, C., & Verly, J. G. (2016). **The ULg multimodality drowsiness database (called DROZY) and examples of use.** In *2016 IEEE Winter Conference on Applications of Computer Vision (WACV)* (pp. 1–7). IEEE.
 
