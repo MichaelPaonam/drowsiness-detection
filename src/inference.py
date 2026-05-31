@@ -311,11 +311,8 @@ def train_and_save_model(
         raise ValueError("Dataset has no positive samples; cannot compute scale_pos_weight.")
     n_neg = len(y) - n_pos
     if n_neg == 0:
-        log.warning("No negative samples; training with scale_pos_weight=1.0")
-        scale_pos_weight = 1.0
-    else:
-        scale_pos_weight = n_neg / n_pos
-    model = _build_xgb(scale_pos_weight)
+        raise ValueError("Dataset has no negative samples; cannot train binary classifier.")
+    model = _build_xgb(n_neg / n_pos)
     model_path = models_dir / "best_model.json"
 
     log.info(
