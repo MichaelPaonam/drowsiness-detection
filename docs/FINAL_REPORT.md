@@ -293,7 +293,7 @@ The current system is a research prototype with a well-defined scope. Understand
 
 A minimal viable production architecture follows this data flow:
 
-```
+```text
 Wearable ECG sensor
     → Bluetooth / BLE
     → Edge device (microcontroller or SBC)
