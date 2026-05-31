@@ -12,7 +12,7 @@ Driver drowsiness is a leading contributor to road traffic fatalities worldwide.
 
 An XGBoost classifier trained on four selected z-normalized HRV features — `sdnn_znorm`, `cv_rr_znorm`, `rmssd_znorm`, `pnn50_znorm` — achieves strong discriminative performance under Leave-One-Subject-Out cross-validation (LOSO-CV): PR-AUC 0.958, ROC-AUC 0.979, and a mean per-fold F1 of 0.88. These results demonstrate that time-domain HRV features carry a meaningful signal for distinguishing alert from drowsy physiological states at the subject-independent level.
 
-However, the system's practical utility is tempered by significant limitations in label quality and dataset suitability. The pseudo-labels attain only moderate agreement with DROZY ground truth (Cohen's κ = 0.15, accuracy = 0.59), and stability analysis reveals that prediction sequences are frequently erratic — 17 of 56 DROZY recordings exceed a 30% label-flip rate, and only 3 of 20 DDD recordings display the expected monotonic fatigue buildup. These findings highlight the gap between classifying HRV states and reliably tracking drowsiness onset over time, and motivate concrete directions for future dataset collection and feature engineering.
+However, the system's practical utility is tempered by significant limitations in label quality and dataset suitability. The pseudo-labels attain only moderate agreement with DROZY ground truth (Cohen's κ = 0.15, accuracy = 0.59), and stability analysis reveals that prediction sequences are frequently erratic — 17 of 56 DROZY recordings exceed a 30% label-flip rate, and only 3 of 20 DDD recordings display the expected monotonic fatigue buildup. These findings highlight the gap between classifying HRV states and reliably tracking drowsiness onset over time and motivate concrete directions for future dataset collection and feature engineering.
 
 ---
 
@@ -72,7 +72,7 @@ Prior to HRV computation, each ECG signal was bandpass filtered (**0.5–40 Hz, 
 RR intervals derived from detected peaks were subjected to artifact rejection:
 
 - Physiological bounds: **300–2000 ms** (equivalent to 30–200 bpm)
-- Ectopic beat removal: intervals deviating more than **20% from the local median** were discarded
+- Ectopic beat removal: intervals deviating more than **20% from the window median** were discarded
 - Windows with fewer than **50 clean RR intervals** were excluded entirely
 
 ### 3.2 Windowed HRV Feature Extraction
@@ -95,7 +95,7 @@ Seven time-domain features were extracted per window:
 
 Raw HRV features vary substantially across individuals due to differences in baseline physiology (age, fitness, resting heart rate). A subject with a naturally low SDNN of 30 ms cannot be compared directly to one with a resting SDNN of 70 ms. To isolate **within-subject** changes attributable to fatigue, each feature was z-score normalized per subject:
 
-```
+```text
 z_norm = (x − subject_mean) / subject_std
 ```
 
@@ -234,7 +234,7 @@ For practical deployment, raw window-level predictions are not sufficient. A pro
 
 **Add non-linear HRV features.** Sample entropy (complexity of RR interval series) and detrended fluctuation analysis (long-range temporal correlations) capture dynamical properties of autonomic regulation that linear statistics miss. These features tend to decrease with drowsiness and may provide complementary discriminative information.
 
-**Real-time deployment via wearable ECG.** The current pipeline processes pre-recorded EDF files offline. Adapting the inference pipeline to stream from a wearable single-lead ECG device (chest strap or smart garment) would enable real-time driver monitoring. The inference pipeline (`predict.py`, loaded XGBoost model + saved scaler) is architecturally ready; the streaming interface and alert logic require development.
+**Real-time deployment via wearable ECG.** The current pipeline processes pre-recorded EDF files offline. Adapting the inference pipeline to stream from a wearable single-lead ECG device (chest strap or smart garment) would enable real-time driver monitoring. The inference pipeline (`inference.py`, loaded XGBoost model + saved scaler) is architecturally ready; the streaming interface and alert logic require development.
 
 **Temporal modeling.** Replace or supplement the XGBoost window-level classifier with a sequential model (LSTM, GRU, or Hidden Markov Model) that explicitly models state transitions over time. This would address the erratic flip rates observed in the stability analysis and align the system's output with the gradually evolving nature of drowsiness.
 
@@ -256,7 +256,7 @@ The pipeline, codebase, and documented findings provide a solid foundation for t
 
 1. Massoz, Q., Langohr, T., François, C., & Verly, J. G. (2016). **The ULg multimodality drowsiness database (called DROZY) and examples of use.** In *2016 IEEE Winter Conference on Applications of Computer Vision (WACV)* (pp. 1–7). IEEE.
 
-2. Orosco, L., Correa, A. G., Diez, P., & Laciar, E. (2023). **Driver drowsiness detection based on physiological signals: A systematic review.** *Sensors*, 23(3), 1764. *(DDD dataset reference.)*
+2. Orosco, L., Garcés, M. A., Cañadas Fragapane, G. E., Dell'Aquila, C., Iturrieta Gimeno, J. C., & Laciar Leber, E. (2023). **Drivers Drowsiness Database: A collection of physiological signals during the use of a driving simulator (DD-Database)** [Dataset]. Dryad. https://doi.org/10.5061/dryad.5tb2rbp9c
 
 3. Task Force of the European Society of Cardiology and the North American Society of Pacing and Electrophysiology. (1996). **Heart rate variability: Standards of measurement, physiological interpretation, and clinical use.** *Circulation*, 93(5), 1043–1065.
 
