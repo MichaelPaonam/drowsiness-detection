@@ -66,7 +66,11 @@ jobs:
           WORKFLOW_URL: ${{ github.event.workflow_run.html_url }}
           WORKFLOW_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
           ALERT_URL: ${{ github.event.alert.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          FULL_NAME=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
+            "https://api.github.com/users/$ACTOR" | jq -r '.name // empty')
+          ACTOR="${FULL_NAME:-$ACTOR}"
           case "$EVENT" in
             push)
               MSG="🚀 Push to main by $ACTOR"
