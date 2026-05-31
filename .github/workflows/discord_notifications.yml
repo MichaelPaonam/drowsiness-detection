@@ -114,7 +114,7 @@ jobs:
           echo "url=$URL" >> $GITHUB_OUTPUT
 
       - name: Send Discord Notification
-        uses: tsickert/discord-webhook@v7.0.0
+        uses: tsickert/discord-webhook@b217a69502f52803de774ded2b1ab7c282e99645
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
           content: |
