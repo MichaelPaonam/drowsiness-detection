@@ -55,11 +55,15 @@ def detect_sampling_rate(df: pd.DataFrame) -> int:
         Sampling rate in Hz, rounded to the nearest integer.
 
     Raises:
-        ValueError: If fewer than two rows are present.
+        ValueError: If fewer than two rows are present or the median delta is
+            non-positive.
     """
     if len(df) < 2:
         raise ValueError("Cannot detect sampling rate: fewer than 2 rows.")
-    dt = float(df["timestamp_sec"].iloc[1] - df["timestamp_sec"].iloc[0])
+    deltas = np.diff(df["timestamp_sec"].to_numpy(dtype=np.float64))
+    dt = float(np.median(deltas))
+    if dt <= 0:
+        raise ValueError(f"Non-positive median timestamp delta: {dt}")
     return int(round(1.0 / dt))
 
 
