@@ -8,8 +8,6 @@ on:
   pull_request:
     types:
       - opened
-      - reopened
-      - synchronize
       - closed
 
   pull_request_review:
