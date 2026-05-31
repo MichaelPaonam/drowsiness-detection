@@ -118,5 +118,6 @@ jobs:
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
           embed-title: ${{ steps.message.outputs.msg }}
+          embed-description: "Repository: ${{ github.repository }}"
           embed-url: ${{ steps.message.outputs.url }}
           embed-color: "16711680"
