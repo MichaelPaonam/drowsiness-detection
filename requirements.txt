@@ -21,6 +21,9 @@ scikit-learn>=1.8.0
 xgboost>=3.2.0
 catboost>=1.2
 
+# Model serialization
+joblib>=1.4
+
 # Hyperparameter optimization
 optuna>=3.0
 
