@@ -3,7 +3,7 @@ Drowsiness detection inference pipeline.
 
 Provides DrowsinessPredictor for classifying ECG signals or pre-computed
 HRV features as alert (0) or drowsy (1), and train_and_save_model to
-produce a deployment-ready model trained on all available data.
+produce a deployment-ready XGBoost model trained on all available data.
 
 Usage
 -----
@@ -23,7 +23,6 @@ from typing import Any
 import joblib
 import numpy as np
 import pandas as pd
-from catboost import CatBoostClassifier
 from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
 
@@ -47,15 +46,6 @@ _RAW_FEATURE_COLS: list[str] = [col.replace("_znorm", "") for col in SELECTED_FE
 _RANDOM_STATE: int = 42
 
 
-def _build_catboost() -> CatBoostClassifier:
-    """Return a class-balanced CatBoostClassifier (unfitted)."""
-    return CatBoostClassifier(
-        auto_class_weights="Balanced",
-        verbose=0,
-        random_seed=_RANDOM_STATE,
-    )
-
-
 def _build_xgb(scale_pos_weight: float) -> XGBClassifier:
     """Return an XGBClassifier weighted for class imbalance (unfitted)."""
     return XGBClassifier(
@@ -69,8 +59,8 @@ class DrowsinessPredictor:
     """
     End-to-end drowsiness inference from raw ECG or pre-computed HRV features.
 
-    Wraps a trained CatBoost or XGBoost model together with a fitted
-    StandardScaler and exposes three prediction surfaces:
+    Wraps a trained XGBoost model together with a fitted StandardScaler and
+    exposes three prediction surfaces:
 
     * predict_from_ecg      — full pipeline from a raw ECG array
     * predict_from_features — single-sample prediction from znorm features
@@ -81,23 +71,17 @@ class DrowsinessPredictor:
         self,
         model_path: Path,
         scaler_path: Path,
-        model_type: str = "xgboost",
     ) -> None:
         """
-        Load a trained model and fitted scaler from disk.
+        Load a trained XGBoost model and fitted scaler from disk.
 
         Args:
-            model_path: Path to the model file (.cbm for CatBoost, .json for XGBoost).
+            model_path: Path to the XGBoost model file (.json).
             scaler_path: Path to the StandardScaler pickle saved by joblib.
-            model_type: One of "catboost" or "xgboost".
 
         Raises:
-            ValueError: If model_type is not recognized.
             FileNotFoundError: If model_path or scaler_path does not exist.
         """
-        if model_type not in ("catboost", "xgboost"):
-            raise ValueError(f"model_type must be 'catboost' or 'xgboost', got '{model_type}'.")
-
         model_path = Path(model_path)
         scaler_path = Path(scaler_path)
         if not model_path.exists():
@@ -107,18 +91,13 @@ class DrowsinessPredictor:
 
         self.model_path = model_path
         self.scaler_path = scaler_path
-        self.model_type = model_type
 
         self.scaler: StandardScaler = joblib.load(scaler_path)
         log.info("Loaded scaler from %s", scaler_path)
 
-        if model_type == "catboost":
-            self._model: CatBoostClassifier | XGBClassifier = CatBoostClassifier()
-            self._model.load_model(str(model_path))
-        else:
-            self._model = XGBClassifier()
-            self._model.load_model(str(model_path))
-        log.info("Loaded %s model from %s", model_type, model_path)
+        self._model = XGBClassifier()
+        self._model.load_model(str(model_path))
+        log.info("Loaded XGBoost model from %s", model_path)
 
     def predict_from_ecg(
         self,
@@ -272,35 +251,30 @@ class DrowsinessPredictor:
 
 
 def train_and_save_model(
-    model_type: str = "xgboost",
     csv_path: Path | None = None,
     models_dir: Path | None = None,
 ) -> tuple[Path, Path]:
     """
-    Train a model on all available labeled data and save it with its scaler.
+    Train an XGBoost model on all available labeled data and save it with its scaler.
 
     Unlike train_classifiers.py (which evaluates per-fold for reporting),
     this function trains on the complete dataset to produce a
     deployment-ready model suitable for use with DrowsinessPredictor.
 
     Args:
-        model_type: Model to train; one of "xgboost" (default) or "catboost".
         csv_path: Path to the labeled HRV feature CSV.
             Defaults to HRV_WINDOWS_FINAL_CSV from config.
         models_dir: Output directory for saved files.
             Defaults to OUTPUTS_DIR/models.
 
     Returns:
-        Tuple of (model_path, scaler_path).
+        Tuple of (model_path, scaler_path). model_path is a .json file.
 
     Raises:
-        ValueError: If model_type is not recognized or dataset has no positive labels.
+        ValueError: If dataset has no positive labels.
         FileNotFoundError: If csv_path does not exist.
         KeyError: If required columns are absent from the dataset.
     """
-    if model_type not in ("catboost", "xgboost"):
-        raise ValueError(f"model_type must be 'catboost' or 'xgboost', got '{model_type}'.")
-
     csv_path = Path(csv_path) if csv_path is not None else HRV_WINDOWS_FINAL_CSV
     if not csv_path.exists():
         raise FileNotFoundError(
@@ -326,18 +300,13 @@ def train_and_save_model(
     log.info("Fitted StandardScaler on %d samples", len(X))
 
     n_pos = int(y.sum())
-    if model_type == "catboost":
-        model: CatBoostClassifier | XGBClassifier = _build_catboost()
-        model_path = models_dir / "best_model.cbm"
-    else:
-        if n_pos == 0:
-            raise ValueError("Dataset has no positive samples; cannot compute scale_pos_weight.")
-        model = _build_xgb((len(y) - n_pos) / n_pos)
-        model_path = models_dir / "best_model.json"
+    if n_pos == 0:
+        raise ValueError("Dataset has no positive samples; cannot compute scale_pos_weight.")
+    model = _build_xgb((len(y) - n_pos) / n_pos)
+    model_path = models_dir / "best_model.json"
 
     log.info(
-        "Training %s on %d samples (%d positive, %d negative)...",
-        model_type,
+        "Training XGBoost on %d samples (%d positive, %d negative)...",
         len(X),
         n_pos,
         len(y) - n_pos,
@@ -372,7 +341,7 @@ if __name__ == "__main__":
     mode.add_argument(
         "--train",
         action="store_true",
-        help="Train the best model on all data and save to outputs/models/",
+        help="Train the XGBoost model on all data and save to outputs/models/",
     )
     mode.add_argument(
         "--predict-ecg",
@@ -394,17 +363,11 @@ if __name__ == "__main__":
         help="ECG sampling rate in Hz (only used with --predict-ecg)",
     )
     parser.add_argument(
-        "--model-type",
-        choices=["catboost", "xgboost"],
-        default="xgboost",
-        help="Model architecture",
-    )
-    parser.add_argument(
         "--model-path",
         type=Path,
         default=None,
         metavar="PATH",
-        help="Path to saved model file (default: outputs/models/best_model.*)",
+        help="Path to saved model file (default: outputs/models/best_model.json)",
     )
     parser.add_argument(
         "--scaler-path",
@@ -424,23 +387,18 @@ if __name__ == "__main__":
     setup_logging()
 
     if args.train:
-        saved_model, saved_scaler = train_and_save_model(model_type=args.model_type)
+        saved_model, saved_scaler = train_and_save_model()
         print(f"Model  saved: {saved_model}")
         print(f"Scaler saved: {saved_scaler}")
         sys.exit(0)
 
-    model_path = args.model_path
-    if model_path is None:
-        ext = "cbm" if args.model_type == "catboost" else "json"
-        model_path = MODELS_DIR / f"best_model.{ext}"
-
+    model_path = args.model_path or (MODELS_DIR / "best_model.json")
     scaler_path = args.scaler_path or (MODELS_DIR / "scaler.pkl")
 
     try:
         predictor = DrowsinessPredictor(
             model_path=model_path,
             scaler_path=scaler_path,
-            model_type=args.model_type,
         )
     except FileNotFoundError as exc:
         print(f"Error: {exc}. Run with --train first.", file=sys.stderr)
