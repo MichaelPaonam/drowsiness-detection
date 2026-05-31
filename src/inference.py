@@ -125,6 +125,8 @@ class DrowsinessPredictor:
         Raises:
             ValueError: If no valid HRV windows can be extracted from the signal.
         """
+        if sampling_rate <= 0:
+            raise ValueError(f"sampling_rate must be positive, got {sampling_rate!r}")
         ecg_filt = apply_bandpass_filter(ecg_signal.astype(np.float64), float(sampling_rate))
 
         window_samples = int(WINDOW_SEC * sampling_rate)
@@ -245,7 +247,7 @@ class DrowsinessPredictor:
 
         out = df.copy()
         out["prediction"] = [_LABEL_MAP[int(p >= 0.5)] for p in y_proba]
-        out["confidence"] = np.round(y_proba, 3)
+        out["confidence"] = np.round(y_proba, 4)
         log.info("Predicted %d rows from %s", len(out), csv_path)
         return out
 
