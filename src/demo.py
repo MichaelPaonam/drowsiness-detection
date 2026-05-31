@@ -26,9 +26,8 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from inference import DrowsinessPredictor
-
 from config import ECG_CSV_DIR, OUTPUTS_DIR, SELECTED_FEATURES
+from inference import DrowsinessPredictor
 
 log = logging.getLogger(__name__)
 
@@ -79,9 +78,9 @@ def _infer_sampling_rate(timestamps: np.ndarray) -> float:
         Rounded sampling rate estimate in Hz.
     """
     n = min(100, len(timestamps))
-    dts = np.diff(timestamps[:n])
-    median_dt = float(np.median(dts[dts > 0]))
-    return round(1.0 / median_dt)
+    deltas = np.diff(timestamps[:n])
+    sampling_rate = int(np.round(1.0 / float(np.median(deltas[deltas > 0]))))
+    return float(sampling_rate)
 
 
 def _load_ecg(
@@ -309,7 +308,7 @@ def main() -> None:
     timestamps, ecg_signal, sampling_rate = _load_ecg(ecg_file, args.sampling_rate)
 
     predictor = DrowsinessPredictor(model_path=_MODEL_PATH, scaler_path=_SCALER_PATH)
-    windows = predictor.predict_from_ecg(ecg_signal, sampling_rate)
+    windows = predictor.predict_from_ecg(ecg_signal, sampling_rate=int(sampling_rate))
 
     if not windows:
         print("No valid HRV windows extracted — recording may be too short.")
