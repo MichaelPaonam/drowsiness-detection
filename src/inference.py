@@ -266,7 +266,7 @@ class DrowsinessPredictor:
 
         out = df.copy()
         out["prediction"] = [_LABEL_MAP[int(p >= 0.5)] for p in y_proba]
-        out["confidence"] = y_proba
+        out["confidence"] = np.round(y_proba, 3)
         log.info("Predicted %d rows from %s", len(out), csv_path)
         return out
 
@@ -284,7 +284,7 @@ def train_and_save_model(
     deployment-ready model suitable for use with DrowsinessPredictor.
 
     Args:
-        model_type: Model to train; one of "catboost" (default) or "xgboost".
+        model_type: Model to train; one of "xgboost" (default) or "catboost".
         csv_path: Path to the labeled HRV feature CSV.
             Defaults to HRV_WINDOWS_FINAL_CSV from config.
         models_dir: Output directory for saved files.
@@ -436,11 +436,15 @@ if __name__ == "__main__":
 
     scaler_path = args.scaler_path or (MODELS_DIR / "scaler.pkl")
 
-    predictor = DrowsinessPredictor(
-        model_path=model_path,
-        scaler_path=scaler_path,
-        model_type=args.model_type,
-    )
+    try:
+        predictor = DrowsinessPredictor(
+            model_path=model_path,
+            scaler_path=scaler_path,
+            model_type=args.model_type,
+        )
+    except FileNotFoundError as exc:
+        print(f"Error: {exc}. Run with --train first.", file=sys.stderr)
+        sys.exit(1)
 
     if args.predict_ecg:
         ecg_df = pd.read_csv(args.predict_ecg)
