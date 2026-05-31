@@ -103,8 +103,8 @@ def _load_ecg(
         raise FileNotFoundError(f"ECG file not found: {ecg_file}")
 
     df = pd.read_csv(ecg_file, dtype={"timestamp_sec": float, "ecg": float})
-    timestamps = df["timestamp_sec"].values
-    ecg_signal = df["ecg"].values.astype(np.float64)
+    timestamps = df["timestamp_sec"].to_numpy(dtype=np.float64)
+    ecg_signal = df["ecg"].to_numpy(dtype=np.float64)
 
     fs = sampling_rate if sampling_rate is not None else _infer_sampling_rate(timestamps)
     log.info(
@@ -165,7 +165,7 @@ def plot_drowsiness_timeline(
     fig, ax = plt.subplots(figsize=(12, 4))
 
     for center, pred in zip(centers_min, predictions):
-        color = _COLOR_DROWSY if pred == 1 else _COLOR_ALERT
+        color = _COLOR_DROWSY if pred == "drowsy" else _COLOR_ALERT
         ax.axvspan(center - step_min / 2, center + step_min / 2, alpha=0.25, color=color)
 
     ax.plot(centers_min, confidences, color="black", linewidth=1.5, label="Confidence")
@@ -213,7 +213,7 @@ def plot_feature_evolution(
         values = [w[feat_key] for w in windows]
 
         for center, pred in zip(centers_min, predictions):
-            bg = _COLOR_DROWSY if pred == 1 else _COLOR_ALERT
+            bg = _COLOR_DROWSY if pred == "drowsy" else _COLOR_ALERT
             ax.axvspan(center - step_min / 2, center + step_min / 2, alpha=0.15, color=bg)
 
         ax.plot(centers_min, values, color=line_color, linewidth=1.5)
@@ -246,14 +246,14 @@ def print_summary(
     """
     duration_min = float(timestamps[-1]) / 60.0
     n_windows = len(windows)
-    n_drowsy = sum(1 for w in windows if w["prediction"] == 1)
+    n_drowsy = sum(1 for w in windows if w["prediction"] == "drowsy")
     n_alert = n_windows - n_drowsy
     pct_drowsy = 100.0 * n_drowsy / n_windows if n_windows > 0 else 0.0
     avg_conf = float(np.mean([w["confidence"] for w in windows])) if windows else 0.0
 
     first_drowsy_min: float | None = None
     for w in windows:
-        if w["prediction"] == 1:
+        if w["prediction"] == "drowsy":
             first_drowsy_min = (w["window_start_sec"] + w["window_end_sec"]) / 2.0 / 60.0
             break
 
@@ -302,6 +302,10 @@ def main() -> None:
 
     if not _MODEL_PATH.exists():
         print(f"Model not found at {_MODEL_PATH}.")
+        print("Run python src/inference.py --train first.")
+        sys.exit(1)
+    if not _SCALER_PATH.exists():
+        print(f"Scaler not found at {_SCALER_PATH}.")
         print("Run python src/inference.py --train first.")
         sys.exit(1)
 
