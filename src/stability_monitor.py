@@ -350,7 +350,7 @@ def build_report(
         lines += [
             "Confidence distribution (across all windows):",
             f"  Mean   : {arr.mean():.4f}",
-            f"  Std    : {float(arr.std(ddof=1)):.4f}",
+            f"  Std    : {float(arr.std(ddof=1)) if len(arr) > 1 else 0.0:.4f}",
             f"  Min    : {float(arr.min()):.4f}",
             f"  Max    : {float(arr.max()):.4f}",
             f"  Median : {float(np.median(arr)):.4f}",

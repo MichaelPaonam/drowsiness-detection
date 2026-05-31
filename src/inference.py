@@ -131,6 +131,11 @@ class DrowsinessPredictor:
 
         window_samples = int(WINDOW_SEC * sampling_rate)
         step_samples = int(STEP_SEC * sampling_rate)
+        if step_samples < 1:
+            raise ValueError(
+                f"step_samples is {step_samples} — STEP_SEC ({STEP_SEC}) too small "
+                f"for sampling_rate ({sampling_rate})"
+            )
         n_samples = len(ecg_filt)
 
         raw_records: list[dict[str, Any]] = []
@@ -304,7 +309,13 @@ def train_and_save_model(
     n_pos = int(y.sum())
     if n_pos == 0:
         raise ValueError("Dataset has no positive samples; cannot compute scale_pos_weight.")
-    model = _build_xgb((len(y) - n_pos) / n_pos)
+    n_neg = len(y) - n_pos
+    if n_neg == 0:
+        log.warning("No negative samples; training with scale_pos_weight=1.0")
+        scale_pos_weight = 1.0
+    else:
+        scale_pos_weight = n_neg / n_pos
+    model = _build_xgb(scale_pos_weight)
     model_path = models_dir / "best_model.json"
 
     log.info(
