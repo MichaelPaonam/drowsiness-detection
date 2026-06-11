@@ -1,6 +1,6 @@
 # Drowsiness Detection
 
-Drowsiness Detection is a data science project focused on identifying signs of fatigue from visual signals, with an initial emphasis on camera-based driver monitoring. The project is intended to support early detection of drowsiness using HRV features generated from ECG data or BVP curves.
+Drowsiness Detection is a data science project focused on identifying signs of fatigue from PPG signals, with an initial emphasis on ECG data. The project is intended to support early detection of drowsiness using HRV features generated from ECG data or BVP curves.
 
 ## Project Objective
 
