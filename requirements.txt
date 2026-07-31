@@ -28,4 +28,4 @@ joblib>=1.4
 optuna>=3.0
 
 # Optional: progress bars when iterating over EDF files
-tqdm>=4.66
+tqdm>=4.67.3
